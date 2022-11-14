@@ -7,6 +7,6 @@ import (
 )
 
 func main() {
-	fmt.Println("Starting main.go...")
+	fmt.Println("Starting Ground Control Station...")
 	server.InitServer()
 }

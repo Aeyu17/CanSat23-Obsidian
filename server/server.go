@@ -1,13 +1,23 @@
 package server
 
 import (
+	"embed"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 )
 
+//go:embed static/*
+var staticFiles embed.FS
+
 func InitServer() {
-	fileServer := http.FileServer(http.Dir("./static"))
+	staticContent, err := fs.Sub(staticFiles, "static")
+	if err != nil {
+		panic(err)
+	}
+
+	fileServer := http.FileServer(http.FS(staticContent))
 	http.Handle("/", fileServer)
 
 	http.HandleFunc("/hello", helloHandler)
