@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/Aeyu17/CanSat23-Obsidian/server"
+	server "github.com/Aeyu17/CanSat23-Obsidian/server"
 )
 
 func main() {
