@@ -1,9 +1,12 @@
 package backend
 import (
-    "fmt"
     "math"
     "math/rand"
+    /*
+    used by the example
+    "fmt"
     "time"
+    */
 )
 
 //generates an altitude based on the parameters given
