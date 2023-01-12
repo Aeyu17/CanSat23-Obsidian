@@ -35,8 +35,12 @@ func GenerateRandAlt(marginOfError float64, timeToApogee int, finalAlt int, curr
 }
 
 //generates a altitude from a certain descent speed
-func GenerateDescent(testAlt float64, descentSpeed int, currentTime float64, previousTime float64) (position float64){
-    position = (math.Round(( ( -( float64(descentSpeed) * (currentTime-previousTime)) ) + testAlt )*100))/100
+func GenerateDescent(testAlt float64, descentSpeed1 int, descentSpeed2 int, currentTime float64, previousTime float64) (position float64){
+    if testAlt >= 200 {
+        position = (math.Round(( ( -( float64(descentSpeed1) * (currentTime-previousTime)) ) + testAlt )*100))/100
+    } else {
+        position = (math.Round(( ( -( float64(descentSpeed2) * (currentTime-previousTime)) ) + testAlt )*100))/100
+    }
     if(position < 0){
         position = 0
         FlightStatus = true
@@ -50,7 +54,8 @@ func main(){
     TestMarginOfError := 0.15
     TestTimeToApogee := 15
     FinalAlt := 700
-    DescentSpeed := 15
+    DescentSpeed1 := 20
+    DescentSpeed2 := 15
     ParachuteActivationHeight := 500.0
     TestAlt := 0.0
     CurrentTime := 0.0
@@ -65,7 +70,7 @@ func main(){
         if(CurrentTime < float64(TestTimeToApogee) || TestAlt > ParachuteActivationHeight){
             TestAlt = GenerateRandAlt(TestMarginOfError, TestTimeToApogee, FinalAlt, CurrentTime)
         } else {
-            TestAlt = GenerateDescent(TestAlt, DescentSpeed, CurrentTime, PreviousTime)
+            TestAlt = GenerateDescent(TestAlt, DescentSpeed1, DescentSpeed2, CurrentTime, PreviousTime)
         }
         fmt.Println(fmt.Sprint(CurrentTime))
 
