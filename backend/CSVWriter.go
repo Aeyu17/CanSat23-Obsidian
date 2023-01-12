@@ -6,6 +6,7 @@ import (
 
 //CSV Writer used to output data into a csv file format
 func WriteToCSV(message string) {
+	//will create a new file if one does not already exist
 	newFileC, err := os.OpenFile("flightdata.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	defer newFileC.Close()
 
@@ -16,7 +17,7 @@ func WriteToCSV(message string) {
 
 	_, err2 := newFileC.WriteString(message)
 
-	//logs error if file could be wrote to
+	//logs error if file could not be wrote to
 	if err2 != nil {
 		log.Fatal(err2)
 	}
