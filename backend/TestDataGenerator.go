@@ -22,7 +22,7 @@ func GenerateRandAlt(marginOfError float64, timeToApogee int, finalAlt int, curr
 	randMargin := rand.Float64() * marginOfError
 	randMargin = math.Round(randMargin*100) / 100
 
-	var cleanAlt float64 := generateCleanAlt(float64(finalAlt), float64(timeToApogee), currentTime)
+	cleanAlt := generateCleanAlt(float64(finalAlt), float64(timeToApogee), currentTime)
 
 	if rand.Intn(2) == 0 {
 		randAlt = cleanAlt - randMargin
