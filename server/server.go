@@ -20,8 +20,10 @@ func InitServer() {
 	fileServer := http.FileServer(http.FS(staticContent))
 	http.Handle("/", fileServer)
 
-	http.HandleFunc("/hello", helloHandler)
-	http.HandleFunc("/operator", operatorHandler)
+	/*
+		http.HandleFunc("/hello", helloHandler)
+		http.HandleFunc("/operator", operatorHandler)
+	*/
 
 	fmt.Println("Starting server at port 8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
@@ -29,6 +31,7 @@ func InitServer() {
 	}
 }
 
+/*
 func helloHandler(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path != "/hello" {
 		http.Error(w, "404 not found.", http.StatusNotFound)
@@ -56,3 +59,4 @@ func operatorHandler(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintf(w, "Operator line")
 }
+*/

@@ -22,8 +22,7 @@ func GenerateRandAlt(marginOfError float64, timeToApogee int, finalAlt int, curr
 	randMargin := rand.Float64() * marginOfError
 	randMargin = math.Round(randMargin*100) / 100
 
-	var cleanAlt float64
-	cleanAlt = generateCleanAlt(float64(finalAlt), float64(timeToApogee), currentTime)
+	var cleanAlt float64 := generateCleanAlt(float64(finalAlt), float64(timeToApogee), currentTime)
 
 	if rand.Intn(2) == 0 {
 		randAlt = cleanAlt - randMargin
@@ -46,7 +45,7 @@ func GenerateDescent(testAlt float64, descentSpeed1 int, descentSpeed2 int, curr
 	}
 	if position < 0 {
 		position = 0
-		flightStatus := true
+		// flightStatus := true
 	}
 	return
 }
