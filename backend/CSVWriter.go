@@ -1,4 +1,5 @@
-package main
+package backend
+
 import (
 	"log"
 	"os"
