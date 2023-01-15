@@ -1,8 +1,10 @@
+#include <SparkFun_u-blox_GNSS_Arduino_Library.h>
+#include <u-blox_config_keys.h>
+#include <u-blox_structs.h>
 #include <Arduino.h>
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include "Adafruit_BMP3XX.h"
-#include <Adafruit_LIS3MDL.h>
 #include <Adafruit_LSM6DSOX.h>
 #include <Servo.h>
 #include <vector>
@@ -40,29 +42,35 @@
 
 
 // initializing
-String state = "awaiting launch";
+int phase = 0;
+String shield = "N";
+String flag = "N";
+String parachute = "N";
+String modes = "S";
+String state = "AWAITING LAUNCH";
 int i;
 const int ID = 1070;
 const int GROUND = 0;
 int packets = 0;
 double alt_offset;
 
-
+Servo servo1; // rocket and parachute
+Servo servo2; // heat shield
+Servo servo3; // flag
 
 
 Adafruit_BMP3XX bmp;
 Adafruit_LSM6DSOX sox;
-Adafruit_LIS3MDL lis3mdl;
 
 // define sea level pressure (will probably need to change)
-#define SEALEVELPRESSURE_HPA (1013.25)
+#define SEALEVELPRESSURE_HPA (1017)
+
 
 
 
 // SETUP
 // bmp388
 // lsm6dsox
-// lis3mdl
 
 // bmp388 setup
 void bmpsetup() {
@@ -81,7 +89,7 @@ void bmpsetup() {
 
 
 // lsm6dsox setup
-void soxsetup() {
+void dsoxsetup() {
   
 Serial.println("Adafruit LSM6DSOX test");
 
@@ -207,26 +215,39 @@ Serial.println("Adafruit LSM6DSOX test");
   }
 }
 
+void ledblink(void){
+  pinMode(27,OUTPUT);
 
-
-// lis3mdl setup
-void mdlsetup() {
-
+  while(true) {
+    pinMode(27,HIGH);
+    delay(500);
+    pinMode(27,LOW);
+    delay(500);
+  }
 }
-
-
-
-
-
-
-
-
 
 void setup() {
+Serial.begin(115200);
+Wire.setSCL(22);
+Wire.setSDA(23);
+Wire.begin();
+
+Serial1.begin(9600);
+
+bmpsetup();
+dsoxsetup();
+
+servo1.attach(15,0,3000); // need pin number // release mechanism // mosfet 33
+servo2.attach(32,0,3000); // need pin number // heat shield
+servo3.attach(14,0,3000); // need pin number // flag
+
 
 
 }
 
+
+
+// beginning of software for loop
 
 
 // configuring the pressure to ground 
@@ -252,16 +273,141 @@ void bmpconfigure() {
     }
   }
   
-  alt_offset = (num1 + num2 + num3 + num4 + num5)/5;
+  alt_offset = (number1 + number2 + number3 + number4 + number5)/5;
   Serial.print(alt_offset);
 }
+
+
+
+// initial rocket release
+void rocketrelease() {
+  servo1.write(10);
+  delay(300);
+}
+
+
+
+// parachute release
+void chuterelease() {
+  servo1.write(120);
+  delay(300);
+}
+
+
+
+// first shield deploy
+void shielddeploy1() {
+  servo2.write(20);
+  delay(300);
+}
+
+
+
+// shield retract
+void shieldretract() {
+  servo2.write(-20); 
+  delay(300); 
+}
+
+
+
+// second shield deploy
+void shielddeploy2() {
+  servo2.write(60);
+  delay(300);
+}
+
+
+
+// flag delpy
+void flagdeploy() {
+  servo3.write(500);
+  delay(300);
+}
+
+
+// reading data
+void data() {
+  
+  // bmp388 reading
+  if (! bmp.performReading()) {
+    Serial.println("Failed to perform reading D:");
+  }
+
+  // for transmit
+  bmp.performReading();
+
+  sensors_event_t accel;
+  sensors_event_t gyro;
+  sensors_event_t temp;
+  sox.getEvent(&accel, &gyro, &temp);
+
+
+  // time
+  float currentTime = millis();
+  currentTime = currentTime / 1000;
+  int hourInt = currentTime / 3600;
+  String hours = String(hourInt);
+  if (hours.length() == 1){
+    hours = "0" + hours;
+  }
+  int minuteInt = currentTime / 60 - hourInt * 60;
+  String minutes = String(minuteInt);
+  if (minutes.length() == 1){
+    minutes = "0" + minutes;
+  }
+  String seconds = String(float(currentTime - hourInt * 3600 - minuteInt * 60));
+  if (seconds.length() != 5){
+    seconds = "0" + seconds;
+  }
+  String missiontime = hours + ":" + minutes + ":" + seconds;
+
+  
+  // voltage                                         
+  int vread = analogRead(13);
+  float voltage = vread * (3.3/1023.0) * 2;
+
+  
+  double roll = gyro.gyro.x;
+  double pitch = gyro.gyro.y; 
+  double temperature = bmp.temperature;
+  double altitude = bmp.readAltitude(SEALEVELPRESSURE_HPA) - alt_offset;
+  packets += 1;
+  String c = ",";
+
+// TEAM_ID, MISSION_TIME, PACKET_COUNT, MODE, STATE, ALTITUDE, HS_DEPLOYED, 
+// PC_DEPLOYED, MAST_RAISED, TEMPERATURE, VOLTAGE, GPS_TIME, GPS_ALTITUDE, 
+// GPS_LATITUDE, GPS_LONGITUDE, GPS_SATS, TILT_X, TILT_Y, CMD_ECHO
+
+
+  Serial.println(String(ID) + c + String(missiontime) + c + String(packets) + c + String(modes) + c + String(state)+ 
+  c + String(altitude) + c + String(shield) + c + String(parachute) + c + String(flag) + c + String(temperature) + 
+  c + String(voltage) + c + String(gpstime) + c + String(gpsalt) + c + String(gpslong) + c + String(gpssat) + 
+  c + String(roll) + c + String(pitch) + c + String(cmdecho) + c +String(phase));
+  
+  // XBee
+  Serial1.println(String(ID) + c + String(missiontime) + c + String(packets) + c + String(modes) + c + String(state)+ 
+  c + String(altitude) + c + String(shield) + c + String(parachute) + c + String(flag) + c + String(temperature) + 
+  c + String(voltage) + c + String(gpstime) + c + String(gpsalt) + c + String(gpslong) + c + String(gpssat) + 
+  c + String(roll) + c + String(pitch) + c + String(cmdecho) + c +String(phase));
+}
+
+
+
+
+// flight stages 
+// flightstageone (700m to 500m)
+// flightstagetwo (500m to 200m)
+// flightstagethree (200m to 0m)
+
 
 
 
 void loop() {
 
 
-// 
 
+
+ledblink; // make sure this stays at the end of the loop
 
 }
