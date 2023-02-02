@@ -1,12 +1,21 @@
 :root {
     --main-color: #A0AADF;
-    background-color: gray;
+    background-color: black;
     
 }
 
-header {
+.header {
     background-color: #5C6DC9;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
+    margin: 3px;
+    padding: 10px;
+}
+
+.header > .logo-name {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 10px;
 }
