@@ -1,6 +1,3 @@
-
-
-
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 #include <SparkFun_u-blox_GNSS_Arduino_Library.h>
@@ -11,7 +8,6 @@
 #include <Adafruit_Sensor.h>
 #include "Adafruit_BMP3XX.h"
 #include <Servo.h>
-#include <vector>
 #include <string.h>
 #include <SoftwareSerial.h>
 
@@ -46,7 +42,8 @@
 
 
 
-// initializing
+
+// INITIALIZING
 int phase = 0;
 String shield = "N";
 String flag = "N";
@@ -78,11 +75,8 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55);
 
 
 
-float gpstime = 0;
-
-
-
 // SETUP
+
 // BMP388
 // BNO055
 // SAM-M8Q
@@ -117,7 +111,6 @@ void bnosetup() {
 }
 
 
-
 // gps setup
 void samsetup() {
 
@@ -130,8 +123,6 @@ void samsetup() {
   myGNSS.saveConfigSelective(VAL_CFG_SUBSEC_IOPORT); //Save (only) the communications port settings to flash and BBR
   
 }
-
-
 
 
 // led setup
@@ -150,7 +141,6 @@ void ledblink(void){
 
 
 // beginning of software for loop
-
 
 // configuring the pressure to ground 
 void bmpconfigure() {
@@ -181,12 +171,12 @@ void bmpconfigure() {
 
 
 
+// RELEASE MECHANISMS
 // initial rocket release
 void rocketrelease() {
   servo1.write(10);
   delay(300);
 }
-
 
 
 // parachute release
@@ -196,13 +186,11 @@ void chuterelease() {
 }
 
 
-
 // first shield deploy
 void shielddeploy1() {
   servo2.write(20); // don't know this number yet
   delay(300);
 }
-
 
 
 // shield retract
@@ -212,13 +200,11 @@ void shieldretract() {
 }
 
 
-
 // second shield deploy
 void shielddeploy2() {
   servo2.write(60); // don't know this number yet
   delay(300);
 }
-
 
 
 // flag delpy
@@ -228,7 +214,9 @@ void flagdeploy() {
 }
 
 
-// reading data
+
+
+// READING DATA
 void data() {
   
   // bmp388 reading
@@ -255,7 +243,7 @@ void data() {
   //The module only responds when a new position is available
   long gpslat;
   long gpslong;
-  long gpssat;
+  int gpssat;
   long gpsalt;
   
   if (millis() - lastTime > 1000)
@@ -267,8 +255,6 @@ void data() {
     gpsalt = myGNSS.getAltitude();
     gpssat = myGNSS.getSIV();
   }
-
-
 
 
   // time
@@ -295,11 +281,12 @@ void data() {
   int vread = analogRead(13);
   float voltage = vread * (3.3/1023.0) * 2;
 
-  
+  // altitude and temperature to display
   double temperature = bmp.temperature;
   double altitude = bmp.readAltitude(SEALEVELPRESSURE_HPA) - alt_offset;
   packets += 1;
   String c = ",";
+
 
 // TEAM_ID, MISSION_TIME, PACKET_COUNT, MODE, STATE, ALTITUDE, HS_DEPLOYED, 
 // PC_DEPLOYED, MAST_RAISED, PRESSURE, TEMPERATURE, VOLTAGE, GPS_TIME, GPS_ALTITUDE, 
@@ -310,18 +297,21 @@ void data() {
   c + String(altitude) + c + String(shield) + c + String(parachute) + c + String(flag) + c + String(temperature) + 
   c + String(voltage) + c + String(gpstime) + c + String(gpsalt) + c + String(gpslat) + c + String(gpslong) + c + String(gpssat) + 
   c + String(roll) + c + String(pitch) + c + String(cmdecho) + c +String(phase));
+
   
   // XBee
   Serial1.println(String(ID) + c + String(missiontime) + c + String(packets) + c + String(modes) + c + String(state)+ 
   c + String(altitude) + c + String(shield) + c + String(parachute) + c + String(flag) + c + String(temperature) + 
   c + String(voltage) + c + String(gpstime) + c + String(gpsalt) + c + String(gpslat) + c + String(gpslong) + c + String(gpssat) + 
-  c + String(euler.x) + c + String(euler.y) + c + String(cmdecho) + c +String(phase));
+  c + String(roll) + c + String(pitch) + c + String(cmdecho) + c +String(phase));
 }
+
 // 1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 // 1070,00:00:00,10000,F,S,ELEVENCHARS,700.1,P,C,M,100.1,3.1,00:00,100.1,1000.0001,1000.0001,10000,100.01,100.01,SP101325,0
 
 
-// flight stages 
+// FLIGHT STAGES
+ 
 // flightstageone (700m to 500m)
 void flightstageone(){
   data();
