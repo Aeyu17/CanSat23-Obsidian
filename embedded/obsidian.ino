@@ -327,7 +327,7 @@ void data() {
   Serial1.println(String(ID) + c + String(missiontime) + c + String(packets) + c + String(modes) + c + String(state)+ 
   c + String(altitude) + c + String(shield) + c + String(parachute) + c + String(flag) + c + String(temperature) + 
   c + String(voltage) + c + String(gpstime) + c + String(gpsalt) + c + String(gpslat) + c + String(gpslong) + c + String(gpssat) + 
-  c + String(eular.x) + c + String(euler.y) + c + String(cmdecho) + c +String(phase));
+  c + String(euler.x) + c + String(euler.y) + c + String(cmdecho) + c +String(phase));
 }
 
 
