@@ -1,4 +1,6 @@
 
+
+
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 #include <SparkFun_u-blox_GNSS_Arduino_Library.h>
@@ -144,26 +146,6 @@ void ledblink(void){
   }
 }
 
-void setup() {
-Serial.begin(115200);
-Wire.setSCL(22);
-Wire.setSDA(23);
-Wire.begin();
-
-Serial1.begin(9600);
-
-bmpsetup();
-bnosetup();
-samsetup();
-
-
-servo1.attach(15,0,3000); // need pin number // release mechanism // mosfet 33
-servo2.attach(32,0,3000); // need pin number // heat shield
-servo3.attach(14,0,3000); // need pin number // flag
-
-
-
-}
 
 
 
@@ -259,7 +241,13 @@ void data() {
 
   
   // bno055 reading
-  imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+  sensors_event_t event; 
+  bno.getEvent(&event);
+
+  /* Display the floating point data */
+  double roll = event.orientation.x;
+  double pitch = event.orientation.y;
+  double yaw = event.orientation.z;
  
 
   // sam-m8q reading
@@ -321,7 +309,7 @@ void data() {
   Serial.println(String(ID) + c + String(missiontime) + c + String(packets) + c + String(modes) + c + String(state)+ 
   c + String(altitude) + c + String(shield) + c + String(parachute) + c + String(flag) + c + String(temperature) + 
   c + String(voltage) + c + String(gpstime) + c + String(gpsalt) + c + String(gpslat) + c + String(gpslong) + c + String(gpssat) + 
-  c + String(euler.x) + c + String(euler.y) + c + String(cmdecho) + c +String(phase));
+  c + String(roll) + c + String(pitch) + c + String(cmdecho) + c +String(phase));
   
   // XBee
   Serial1.println(String(ID) + c + String(missiontime) + c + String(packets) + c + String(modes) + c + String(state)+ 
@@ -329,8 +317,8 @@ void data() {
   c + String(voltage) + c + String(gpstime) + c + String(gpsalt) + c + String(gpslat) + c + String(gpslong) + c + String(gpssat) + 
   c + String(euler.x) + c + String(euler.y) + c + String(cmdecho) + c +String(phase));
 }
-
-
+// 1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
+// 1070,00:00:00,10000,F,S,ELEVENCHARS,700.1,P,C,M,100.1,3.1,00:00,100.1,1000.0001,1000.0001,10000,100.01,100.01,SP101325,0
 
 
 // flight stages 
@@ -342,6 +330,27 @@ void flightstageone(){
 // flightstagethree (200m to 0m)
 
 
+void setup() {
+Serial.begin(115200);
+Wire.setSCL(22);
+Wire.setSDA(23);
+Wire.begin();
+
+Serial1.begin(9600);
+
+bmpsetup();
+bnosetup();
+samsetup();
+
+
+servo1.attach(15,0,3000); // need pin number // release mechanism // mosfet 33
+servo2.attach(32,0,3000); // need pin number // heat shield
+servo3.attach(14,0,3000); // need pin number // flag
+
+
+
+}
+
 
 
 void loop() {
@@ -349,6 +358,6 @@ void loop() {
 
 
 
-ledblink; // make sure this stays at the end of the loop
+ledblink(); // make sure this stays at the end of the loop
 
 }
