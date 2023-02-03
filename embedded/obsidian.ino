@@ -55,6 +55,13 @@ const int ID = 1070;
 const int GROUND = 0;
 int packets = 0;
 double alt_offset;
+double altitude;
+bool Rocket = false;
+bool ShieldOne = false;
+bool ShieldTwo = false;
+bool ShieldThree = false;
+bool Flag = false;
+bool Chute = false;
 
 Servo servo1; // rocket and parachute
 Servo servo2; // heat shield
@@ -75,12 +82,12 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55);
 
 
 
-// SETUP
+// SENSOR SETUP
 
 // BMP388
 // BNO055
 // SAM-M8Q
-// OpenLog
+// OpenLog // NEED TO DO
 // Led
 
 // bmp388 setup
@@ -283,7 +290,7 @@ void data() {
 
   // altitude and temperature to display
   double temperature = bmp.temperature;
-  double altitude = bmp.readAltitude(SEALEVELPRESSURE_HPA) - alt_offset;
+  altitude = bmp.readAltitude(SEALEVELPRESSURE_HPA) - alt_offset;
   packets += 1;
   String c = ",";
 
@@ -304,22 +311,113 @@ void data() {
   c + String(altitude) + c + String(shield) + c + String(parachute) + c + String(flag) + c + String(temperature) + 
   c + String(voltage) + c + String(gpstime) + c + String(gpsalt) + c + String(gpslat) + c + String(gpslong) + c + String(gpssat) + 
   c + String(roll) + c + String(pitch) + c + String(cmdecho) + c +String(phase));
+
+  delay(1000);
 }
 
-// 1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
-// 1070,00:00:00,10000,F,S,ELEVENCHARS,700.1,P,C,M,100.1,3.1,00:00,100.1,1000.0001,1000.0001,10000,100.01,100.01,SP101325,0
+
 
 
 // FLIGHT STAGES
- 
-// flightstageone (700m to 500m)
-void flightstageone(){
-  data();
+
+// flightstageone (0 to 700m)
+void flightstageone() {
+  bmpconfigure();
+  Serial.println("Phase 1");
+  
+  if ( altitude < (GROUND + 20) ) {
+    state = "AWAITING_LAUNCH";
+    data();
+    Serial.println("AWAITING LAUNCH");
+  }
+  else {
+    Serial.print("ASCENDING");
+    phase++;
+    state = "ASCENDING";
+  }
 }
-// flightstagetwo (500m to 200m)
-// flightstagethree (200m to 0m)
+
+ 
+// flightstagetwo (700m to 500m)
+void flightstagetwo(){
+  Serial.println("Phase 2");
+  
+  if (altitude <= 700 ) {
+    data();
+  }
+  else {
+    state = "DESCENDING";
+    phase++;
+  }
+}
 
 
+// flightstagethree (700;500m to 200m)
+void flightstagethree() {
+  Serial.println("Phase 3");
+  if (Rocket == false) {
+    rocketrelease();
+    Rocket == true;
+  }
+  data();
+  if (altitude <= 500 and state == "DESCENDING") {
+    state = "SHIELD_RELEASE";
+    phase++;
+  }
+}
+
+
+// flightstagefour (500m to 200m)
+void flightstagefour() {
+  Serial.println("Phase 4");
+  if (ShieldOne == false) {
+    shielddeploy1();
+    ShieldOne == true;
+  }
+  data();
+  if (altitude <= 200 and state == "SHIELD_RELEASE") {
+    state = "CHUTE_RELEASE";
+    phase++;
+  }
+}
+
+
+// flightstagefive (200m to 0m)
+void flightstagefive() {
+  Serial.println("Phase 5");
+  if (ShieldTwo == false and Chute == false) {
+    shieldretract();
+    chuterelease();
+    ShieldTwo = true;
+    Chute = true;
+  }
+  data();
+  if (altitude == 0) { // ADD ACCELERATION CONDITION AND CHANGE ALTITUDE PARAMETERS!!
+    state = "LANDED";
+    phase++;
+  }
+}
+
+// flightstagesix
+void flightstagesix() {
+  if (ShieldThree == false and Flag == false) {
+    shielddeploy2();
+    delay(5000);
+    flagdeploy(); // ADD ANOTHER CONDITION HERE
+    ShieldThree = true;
+    Flag == true;
+  }
+  data();
+  //buzzer(); // BUZZER ACTIVATES HERE
+  if (Flag == true) {
+  state = "FLAG_RELEASED";
+  }
+}
+
+
+
+
+// OVERALL SETUP
 void setup() {
 Serial.begin(115200);
 Wire.setSCL(22);
@@ -336,18 +434,23 @@ samsetup();
 servo1.attach(15,0,3000); // need pin number // release mechanism // mosfet 33
 servo2.attach(32,0,3000); // need pin number // heat shield
 servo3.attach(14,0,3000); // need pin number // flag
-
-
-
 }
+
 
 
 
 void loop() {
 
-
-
+  switch(phase) {
+    case 0: phase++; break;
+    case 1: flightstageone(); break;
+    case 2: Serial.print("Entering Phase 2"); flightstagetwo(); break;
+    case 3: Serial.print("Entering Phase 3"); flightstagethree(); break;
+    case 4: Serial.print("Entering Phase 4"); flightstagefour(); break;
+    case 5: Serial.print("Entering Phase 5"); flightstagefive(); break;
+    case 6: Serial.print("Entering Phase 6"); flightstagesix(); break;
+    default: "Case Error"; break;
+  }
 
 ledblink(); // make sure this stays at the end of the loop
-
 }
