@@ -70,14 +70,11 @@ Servo servo3; // flag
 SFE_UBLOX_GNSS myGNSS;
 long lastTime = 0; //Simple local timer. Limits amount if I2C traffic to u-blox module.
 
-
+Adafruit_BNO055 bno = Adafruit_BNO055(55); // Change this number?
 Adafruit_BMP3XX bmp;
 
 // define sea level pressure (will probably need to change)
 #define SEALEVELPRESSURE_HPA (1017)
-
-
-Adafruit_BNO055 bno = Adafruit_BNO055(55);
 
 
 
@@ -147,7 +144,7 @@ void ledblink(void){
 
 
 
-// beginning of software for loop
+// BEGINNING OF SOFTWARE FOR LOOP
 
 // configuring the pressure to ground 
 void bmpconfigure() {
@@ -397,6 +394,7 @@ void flightstagefive() {
     phase++;
   }
 }
+
 
 // flightstagesix
 void flightstagesix() {
