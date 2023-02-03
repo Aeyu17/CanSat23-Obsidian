@@ -1,3 +1,6 @@
+
+#include <Adafruit_BNO055.h>
+#include <utility/imumaths.h>
 #include <SparkFun_u-blox_GNSS_Arduino_Library.h>
 #include <u-blox_config_keys.h>
 #include <u-blox_structs.h>
@@ -5,11 +8,11 @@
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include "Adafruit_BMP3XX.h"
-#include <Adafruit_LSM6DSOX.h>
 #include <Servo.h>
 #include <vector>
 #include <string.h>
 #include <SoftwareSerial.h>
+
 
 // led on for entire duration
 
@@ -58,19 +61,31 @@ Servo servo1; // rocket and parachute
 Servo servo2; // heat shield
 Servo servo3; // flag
 
+SFE_UBLOX_GNSS myGNSS;
+long lastTime = 0; //Simple local timer. Limits amount if I2C traffic to u-blox module.
+
 
 Adafruit_BMP3XX bmp;
-Adafruit_LSM6DSOX sox;
 
 // define sea level pressure (will probably need to change)
 #define SEALEVELPRESSURE_HPA (1017)
 
 
+Adafruit_BNO055 bno = Adafruit_BNO055(55);
+
+
+
+
+float gpstime = 0;
+
 
 
 // SETUP
-// bmp388
-// lsm6dsox
+// BMP388
+// BNO055
+// SAM-M8Q
+// OpenLog
+// Led
 
 // bmp388 setup
 void bmpsetup() {
@@ -87,134 +102,37 @@ void bmpsetup() {
 }
 
 
-
-// lsm6dsox setup
-void dsoxsetup() {
-  
-Serial.println("Adafruit LSM6DSOX test");
-
-  if (!sox.begin_I2C()) {
-    Serial.println("Failed to find LSM6DSOX chip");
+// bno055 setup
+void bnosetup() {
+  /* Initialise the sensor */
+  if(!bno.begin()){
+    /* There was a problem detecting the BNO055 ... check your connections */
+    Serial.print("No BNO055 detected ... Check your wiring or I2C ADDR!");
   }
-
-  Serial.println("LSM6DSOX Found");
-
-  // sox.setAccelRange(LSM6DS_ACCEL_RANGE_2_G);
-  Serial.print("Accelerometer range set to: ");
-  switch (sox.getAccelRange()) {
-  case LSM6DS_ACCEL_RANGE_2_G:
-    Serial.println("+-2G");
-    break;
-  case LSM6DS_ACCEL_RANGE_4_G:
-    Serial.println("+-4G");
-    break;
-  case LSM6DS_ACCEL_RANGE_8_G:
-    Serial.println("+-8G");
-    break;
-  case LSM6DS_ACCEL_RANGE_16_G:
-    Serial.println("+-16G");
-    break;
-  }
-
-  // sox.setGyroRange(LSM6DS_GYRO_RANGE_250_DPS );
-  Serial.print("Gyro range set to: ");
-  switch (sox.getGyroRange()) {
-  case LSM6DS_GYRO_RANGE_125_DPS:
-    Serial.println("125 degrees/s");
-    break;
-  case LSM6DS_GYRO_RANGE_250_DPS:
-    Serial.println("250 degrees/s");
-    break;
-  case LSM6DS_GYRO_RANGE_500_DPS:
-    Serial.println("500 degrees/s");
-    break;
-  case LSM6DS_GYRO_RANGE_1000_DPS:
-    Serial.println("1000 degrees/s");
-    break;
-  case LSM6DS_GYRO_RANGE_2000_DPS:
-    Serial.println("2000 degrees/s");
-    break;
-  case ISM330DHCX_GYRO_RANGE_4000_DPS:
-    break; // unsupported range for the DSOX
-  }
-
-  // sox.setAccelDataRate(LSM6DS_RATE_12_5_HZ);
-  Serial.print("Accelerometer data rate set to: ");
-  switch (sox.getAccelDataRate()) {
-  case LSM6DS_RATE_SHUTDOWN:
-    Serial.println("0 Hz");
-    break;
-  case LSM6DS_RATE_12_5_HZ:
-    Serial.println("12.5 Hz");
-    break;
-  case LSM6DS_RATE_26_HZ:
-    Serial.println("26 Hz");
-    break;
-  case LSM6DS_RATE_52_HZ:
-    Serial.println("52 Hz");
-    break;
-  case LSM6DS_RATE_104_HZ:
-    Serial.println("104 Hz");
-    break;
-  case LSM6DS_RATE_208_HZ:
-    Serial.println("208 Hz");
-    break;
-  case LSM6DS_RATE_416_HZ:
-    Serial.println("416 Hz");
-    break;
-  case LSM6DS_RATE_833_HZ:
-    Serial.println("833 Hz");
-    break;
-  case LSM6DS_RATE_1_66K_HZ:
-    Serial.println("1.66 KHz");
-    break;
-  case LSM6DS_RATE_3_33K_HZ:
-    Serial.println("3.33 KHz");
-    break;
-  case LSM6DS_RATE_6_66K_HZ:
-    Serial.println("6.66 KHz");
-    break;
-  }
-
-  // sox.setGyroDataRate(LSM6DS_RATE_12_5_HZ);
-  Serial.print("Gyro data rate set to: ");
-  switch (sox.getGyroDataRate()) {
-  case LSM6DS_RATE_SHUTDOWN:
-    Serial.println("0 Hz");
-    break;
-  case LSM6DS_RATE_12_5_HZ:
-    Serial.println("12.5 Hz");
-    break;
-  case LSM6DS_RATE_26_HZ:
-    Serial.println("26 Hz");
-    break;
-  case LSM6DS_RATE_52_HZ:
-    Serial.println("52 Hz");
-    break;
-  case LSM6DS_RATE_104_HZ:
-    Serial.println("104 Hz");
-    break;
-  case LSM6DS_RATE_208_HZ:
-    Serial.println("208 Hz");
-    break;
-  case LSM6DS_RATE_416_HZ:
-    Serial.println("416 Hz");
-    break;
-  case LSM6DS_RATE_833_HZ:
-    Serial.println("833 Hz");
-    break;
-  case LSM6DS_RATE_1_66K_HZ:
-    Serial.println("1.66 KHz");
-    break;
-  case LSM6DS_RATE_3_33K_HZ:
-    Serial.println("3.33 KHz");
-    break;
-  case LSM6DS_RATE_6_66K_HZ:
-    Serial.println("6.66 KHz");
-    break;
-  }
+  delay(1000);
+    
+  bno.setExtCrystalUse(true);
 }
 
+
+
+// gps setup
+void samsetup() {
+
+  if (myGNSS.begin() == false) //Connect to the u-blox module using Wire port
+  {
+    Serial.println(F("u-blox GNSS not detected at default I2C address. Please check wiring. Freezing."));
+  }
+
+  myGNSS.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
+  myGNSS.saveConfigSelective(VAL_CFG_SUBSEC_IOPORT); //Save (only) the communications port settings to flash and BBR
+  
+}
+
+
+
+
+// led setup
 void ledblink(void){
   pinMode(27,OUTPUT);
 
@@ -235,7 +153,9 @@ Wire.begin();
 Serial1.begin(9600);
 
 bmpsetup();
-dsoxsetup();
+bnosetup();
+samsetup();
+
 
 servo1.attach(15,0,3000); // need pin number // release mechanism // mosfet 33
 servo2.attach(32,0,3000); // need pin number // heat shield
@@ -297,7 +217,7 @@ void chuterelease() {
 
 // first shield deploy
 void shielddeploy1() {
-  servo2.write(20);
+  servo2.write(20); // don't know this number yet
   delay(300);
 }
 
@@ -305,7 +225,7 @@ void shielddeploy1() {
 
 // shield retract
 void shieldretract() {
-  servo2.write(-20); 
+  servo2.write(-20); // don't know this number yet
   delay(300); 
 }
 
@@ -313,7 +233,7 @@ void shieldretract() {
 
 // second shield deploy
 void shielddeploy2() {
-  servo2.write(60);
+  servo2.write(60); // don't know this number yet
   delay(300);
 }
 
@@ -321,7 +241,7 @@ void shielddeploy2() {
 
 // flag delpy
 void flagdeploy() {
-  servo3.write(500);
+  servo3.write(500); // don't know this number yet
   delay(300);
 }
 
@@ -337,10 +257,30 @@ void data() {
   // for transmit
   bmp.performReading();
 
-  sensors_event_t accel;
-  sensors_event_t gyro;
-  sensors_event_t temp;
-  sox.getEvent(&accel, &gyro, &temp);
+  
+  // bno055 reading
+  imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_EULER);
+ 
+
+  // sam-m8q reading
+  //Query module only every second. Doing it more often will just cause I2C traffic.
+  //The module only responds when a new position is available
+  long gpslat;
+  long gpslong;
+  long gpssat;
+  long gpsalt;
+  
+  if (millis() - lastTime > 1000)
+  {
+    lastTime = millis(); //Update the timer
+    
+    gpslat = myGNSS.getLatitude();
+    gpslong = myGNSS.getLongitude();
+    gpsalt = myGNSS.getAltitude();
+    gpssat = myGNSS.getSIV();
+  }
+
+
 
 
   // time
@@ -368,28 +308,26 @@ void data() {
   float voltage = vread * (3.3/1023.0) * 2;
 
   
-  double roll = gyro.gyro.x;
-  double pitch = gyro.gyro.y; 
   double temperature = bmp.temperature;
   double altitude = bmp.readAltitude(SEALEVELPRESSURE_HPA) - alt_offset;
   packets += 1;
   String c = ",";
 
 // TEAM_ID, MISSION_TIME, PACKET_COUNT, MODE, STATE, ALTITUDE, HS_DEPLOYED, 
-// PC_DEPLOYED, MAST_RAISED, TEMPERATURE, VOLTAGE, GPS_TIME, GPS_ALTITUDE, 
+// PC_DEPLOYED, MAST_RAISED, PRESSURE, TEMPERATURE, VOLTAGE, GPS_TIME, GPS_ALTITUDE, 
 // GPS_LATITUDE, GPS_LONGITUDE, GPS_SATS, TILT_X, TILT_Y, CMD_ECHO
 
 
   Serial.println(String(ID) + c + String(missiontime) + c + String(packets) + c + String(modes) + c + String(state)+ 
   c + String(altitude) + c + String(shield) + c + String(parachute) + c + String(flag) + c + String(temperature) + 
-  c + String(voltage) + c + String(gpstime) + c + String(gpsalt) + c + String(gpslong) + c + String(gpssat) + 
-  c + String(roll) + c + String(pitch) + c + String(cmdecho) + c +String(phase));
+  c + String(voltage) + c + String(gpstime) + c + String(gpsalt) + c + String(gpslat) + c + String(gpslong) + c + String(gpssat) + 
+  c + String(euler.x) + c + String(euler.y) + c + String(cmdecho) + c +String(phase));
   
   // XBee
   Serial1.println(String(ID) + c + String(missiontime) + c + String(packets) + c + String(modes) + c + String(state)+ 
   c + String(altitude) + c + String(shield) + c + String(parachute) + c + String(flag) + c + String(temperature) + 
-  c + String(voltage) + c + String(gpstime) + c + String(gpsalt) + c + String(gpslong) + c + String(gpssat) + 
-  c + String(roll) + c + String(pitch) + c + String(cmdecho) + c +String(phase));
+  c + String(voltage) + c + String(gpstime) + c + String(gpsalt) + c + String(gpslat) + c + String(gpslong) + c + String(gpssat) + 
+  c + String(eular.x) + c + String(euler.y) + c + String(cmdecho) + c +String(phase));
 }
 
 
@@ -397,6 +335,9 @@ void data() {
 
 // flight stages 
 // flightstageone (700m to 500m)
+void flightstageone(){
+  data();
+}
 // flightstagetwo (500m to 200m)
 // flightstagethree (200m to 0m)
 
