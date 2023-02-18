@@ -40,7 +40,12 @@
   // servo 3
   // smack talk mechanical team for degrees AGAIN
 
-
+// TO DO LIST
+// openlog
+// gpstime
+// cmdecho
+// simulation mode
+// set decimal places
 
 
 // INITIALIZING
@@ -56,6 +61,7 @@ const int GROUND = 0;
 int packets = 0;
 double alt_offset;
 double altitude;
+double pressure;
 bool Rocket = false;
 bool ShieldOne = false;
 bool ShieldTwo = false;
@@ -70,11 +76,14 @@ Servo servo3; // flag
 SFE_UBLOX_GNSS myGNSS;
 long lastTime = 0; //Simple local timer. Limits amount if I2C traffic to u-blox module.
 
-Adafruit_BNO055 bno = Adafruit_BNO055(55); // Change this number?
+
 Adafruit_BMP3XX bmp;
 
 // define sea level pressure (will probably need to change)
 #define SEALEVELPRESSURE_HPA (1017)
+
+
+Adafruit_BNO055 bno = Adafruit_BNO055(55);
 
 
 
@@ -144,7 +153,7 @@ void ledblink(void){
 
 
 
-// BEGINNING OF SOFTWARE FOR LOOP
+// beginning of software for loop
 
 // configuring the pressure to ground 
 void bmpconfigure() {
@@ -288,9 +297,24 @@ void data() {
   // altitude and temperature to display
   double temperature = bmp.temperature;
   altitude = bmp.readAltitude(SEALEVELPRESSURE_HPA) - alt_offset;
+  pressure = bmp.pressure/1000.0;
   packets += 1;
   String c = ",";
-
+  String cmdpacket;
+  int comma = cmdpacket.indexOf(",");
+  String cmdecho;
+  int nextone = comma + 1;
+  
+  if (Serial.available()){
+  cmdpacket = Serial.read();
+  cmdecho = cmdpacket.substring(0,comma);
+   
+   // if (cmd.substring(
+  /*if the second item is 1070:
+    switch
+      case (3rd item == CX && 4th item == ON)
+        echo = “CXON”
+        (perform CXON)*/}
 
 // TEAM_ID, MISSION_TIME, PACKET_COUNT, MODE, STATE, ALTITUDE, HS_DEPLOYED, 
 // PC_DEPLOYED, MAST_RAISED, PRESSURE, TEMPERATURE, VOLTAGE, GPS_TIME, GPS_ALTITUDE, 
@@ -299,14 +323,14 @@ void data() {
 
   Serial.println(String(ID) + c + String(missiontime) + c + String(packets) + c + String(modes) + c + String(state)+ 
   c + String(altitude) + c + String(shield) + c + String(parachute) + c + String(flag) + c + String(temperature) + 
-  c + String(voltage) + c + String(gpstime) + c + String(gpsalt) + c + String(gpslat) + c + String(gpslong) + c + String(gpssat) + 
+  c + String(pressure) + c + String(voltage) + c + String(gpstime) + c + String(gpsalt) + c + String(gpslat) + c + String(gpslong) + c + String(gpssat) + 
   c + String(roll) + c + String(pitch) + c + String(cmdecho) + c +String(phase));
 
   
   // XBee
   Serial1.println(String(ID) + c + String(missiontime) + c + String(packets) + c + String(modes) + c + String(state)+ 
   c + String(altitude) + c + String(shield) + c + String(parachute) + c + String(flag) + c + String(temperature) + 
-  c + String(voltage) + c + String(gpstime) + c + String(gpsalt) + c + String(gpslat) + c + String(gpslong) + c + String(gpssat) + 
+  c + String(pressure) + c + String(voltage) + c + String(gpstime) + c + String(gpsalt) + c + String(gpslat) + c + String(gpslong) + c + String(gpssat) + 
   c + String(roll) + c + String(pitch) + c + String(cmdecho) + c +String(phase));
 
   delay(1000);
@@ -394,7 +418,6 @@ void flightstagefive() {
     phase++;
   }
 }
-
 
 // flightstagesix
 void flightstagesix() {
