@@ -41,11 +41,12 @@
   // smack talk mechanical team for degrees AGAIN
 
 // TO DO LIST
-// openlog
+// openlog (not openlog anymore)
 // gpstime
 // cmdecho
 // simulation mode
 // set decimal places
+  // use round() function. Need to wait and see data
 
 
 // INITIALIZING
@@ -68,6 +69,9 @@ bool ShieldTwo = false;
 bool ShieldThree = false;
 bool Flag = false;
 bool Chute = false;
+String gpshour;
+String gpsmin; 
+String gpssec;
 
 Servo servo1; // rocket and parachute
 Servo servo2; // heat shield
@@ -134,7 +138,10 @@ void samsetup() {
 
   myGNSS.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
   myGNSS.saveConfigSelective(VAL_CFG_SUBSEC_IOPORT); //Save (only) the communications port settings to flash and BBR
-  
+
+  gpshour = myGNSS.getHour();
+  gpsmin = myGNSS.getMinute();
+  gpssec = myGNSS.getSecond();
 }
 
 
@@ -289,6 +296,9 @@ void data() {
   }
   String missiontime = hours + ":" + minutes + ":" + seconds;
 
+  // gpstime
+  String gpstime = gpshour + ":" + gpsmin + ":" + gpssec;
+  
   
   // voltage                                         
   int vread = analogRead(13);
@@ -302,15 +312,15 @@ void data() {
   String c = ",";
   String cmdpacket;
   int comma = cmdpacket.indexOf(",");
-  String cmdecho;
+  String cmdecho = " ";
   int nextone = comma + 1;
   
   if (Serial.available()){
   cmdpacket = Serial.read();
   cmdecho = cmdpacket.substring(0,comma);
    
-   // if (cmd.substring(
-  /*if the second item is 1070:
+   /* if (cmd.substring(
+  if the second item is 1070:
     switch
       case (3rd item == CX && 4th item == ON)
         echo = “CXON”
