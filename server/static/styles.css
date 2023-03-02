@@ -1,7 +1,7 @@
 :root {
     --main-color: #A0AADF;
     background-color: black;
-    
+    font-family: 'Inter';
 }
 
 .header {
@@ -10,7 +10,8 @@
     flex-direction: row;
     justify-content: space-between;
     margin: 3px;
-    padding: 10px;
+    padding-left: 10px;
+    padding-right: 10px;
 }
 
 .header > .logo-name {
