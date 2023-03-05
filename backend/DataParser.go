@@ -12,10 +12,10 @@ func ParseData(dataSet string) (dataArray[20] string) {
 			f = f + string(dataSet[j])
 			j++
 		}
-		stringArray[i] = f
+		dataArray[i] = f
 		j+=2
 	}
 	for i := 0; i < 20; i++ {
-		fmt.Println(stringArray[i])
+		fmt.Println(dataArray[i])
 	}
 }
