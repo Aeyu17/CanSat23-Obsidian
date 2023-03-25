@@ -239,7 +239,7 @@ void data() {
   
   // voltage                                         
   int vread = analogRead(13);
-  float voltage = vread * (3.3/1023.0) * 2;
+  float voltage = vread * (1.6/1023.0) * 2;
 
   // altitude and temperature to display
   double temperature = bmp.temperature;
