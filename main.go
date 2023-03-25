@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
+    	"time"
 
 	backend "github.com/Aeyu17/CanSat23-Obsidian/backend"
 	server "github.com/Aeyu17/CanSat23-Obsidian/server"
