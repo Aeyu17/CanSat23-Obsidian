@@ -1,10 +1,6 @@
 package backend
 import (
-    "fmt"
     "math"
-
-    "log"
-    "os"
 )
 
 var FlightStatus = false

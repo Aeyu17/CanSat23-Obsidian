@@ -4,7 +4,6 @@ import (
 	"fmt"
 )
 
-
 func ParseData(dataSet string) (dataArray[20] string) {
 	j := 0
 	for i := 0; i < 20; i++ {
