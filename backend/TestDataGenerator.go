@@ -2,8 +2,6 @@ package backend
 import (
     "fmt"
     "math"
-    "math/rand"
-    "time"
 
     "log"
     "os"
