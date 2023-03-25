@@ -1,3 +1,7 @@
+:default {
+    align-content: center;
+}
+
 html {
     height: 100vh;
 }
@@ -8,18 +12,42 @@ body {
 
 .header {
     background-color: #5C6DC9;
-    height: 150px;
+    height: 17vh;
     font-size: 38pt;
     margin-left: 5px;
     margin-right: 5px;
 }
 
 .graph_body {
-    background-color: black;
-    height: 100vh;
+    background-color: #A0AADF;
+    border-style: solid;
+    border-width: 5px;
+    height: 83vh;
+    padding: 5px;
+}
+
+.main_graphs {
+    background-color: #7988D2;
+    border-style: solid;
+    border-width: 2px;
+    border-radius: 2%;
+    height: 35vh;
+    padding: 5px;
+}
+
+.secondary_graphs {
+    background-color: #7988D2;
+    border-style: solid;
+    border-width: 2px;
+    border-radius: 2%;
+    height: 35vh;
+    padding: 5px;
 }
 
 .sidebar {
-    background-color: aqua;
-    height: 100vh;
+    background-color: #A0AADF;
+    border-style: solid;
+    border-width: 5px;
+    height: 83vh;
+    padding: 5px;
 }
