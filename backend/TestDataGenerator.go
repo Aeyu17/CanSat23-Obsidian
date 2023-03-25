@@ -1,6 +1,7 @@
 package backend
 import (
     "math"
+    "math/rand"
 )
 
 var FlightStatus = false
