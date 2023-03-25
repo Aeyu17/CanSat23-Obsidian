@@ -4,10 +4,12 @@
 
 html {
     height: 100vh;
+    width: 100vw;
 }
 
 body {
     height: 100vh;
+    width: 100vw;
 }
 
 .header {
@@ -21,9 +23,10 @@ body {
 .graph_body {
     background-color: #A0AADF;
     border-style: solid;
-    border-width: 5px;
+    border-width: 2px;
     height: 83vh;
     padding: 5px;
+    width: 80%;
 }
 
 .main_graphs {
@@ -31,8 +34,7 @@ body {
     border-style: solid;
     border-width: 2px;
     border-radius: 2%;
-    height: 35vh;
-    padding: 5px;
+    height: 50%;
 }
 
 .secondary_graphs {
@@ -40,14 +42,15 @@ body {
     border-style: solid;
     border-width: 2px;
     border-radius: 2%;
-    height: 35vh;
+    height: 50%;
     padding: 5px;
 }
 
 .sidebar {
     background-color: #A0AADF;
     border-style: solid;
-    border-width: 5px;
+    border-width: 2px;
     height: 83vh;
     padding: 5px;
+    width: 20%;
 }
