@@ -14,7 +14,8 @@ func GetPacket(port string) (data int) {
 	buf := make([]byte, 128)
 	data, err = s.Read(buf)
 	if err != nil {
-		log.Fatal(err)
+		log.Print("Could not read | Error message: ")
+		log.Println(err)
 	}
 	log.Printf("%q", buf[:data])
 	s.Close()
@@ -25,7 +26,8 @@ func SendPacket(port string, data []byte, length int) {
 	c := &serial.Config{Name: port, Baud: 115200}
 	s, err := serial.OpenPort(c)
 	if err != nil {
-		log.Fatal(err)
+		log.Print("Could not write | Error message: ")
+		log.Println(err)
 	}
 
 

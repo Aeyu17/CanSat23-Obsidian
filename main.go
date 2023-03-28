@@ -49,9 +49,20 @@ func main() {
 		fmt.Println(fmt.Sprint(CurrentTime))
 		PacketCount += 1 
 
-		//Formation of CSV
-		backend.WriteToCSV(fmt.Sprint(CurrentTime) + "s   :   " + fmt.Sprint(TestAlt) + "m\n")
-		backend.WriteToTXT("1007," + fmt.Sprint(time.Now().Format("15:04:05.00")) + "," + fmt.Sprint(PacketCount) + "," + "S," + "STATE," + fmt.Sprint(TestAlt) + "m," + fmt.Sprint(backend.HS_DEPLOYED) + "," + fmt.Sprint(backend.PS_DEPLOYED) + "," + fmt.Sprint(backend.MAST_RAISED) + "," + fmt.Sprint(Temperature) + "*F," + fmt.Sprint(Pressure) + "hPa," + "3.3," + "GPS_TIME," + "GPS_ALTITUDE," + "GPS_LATITUDE," + "GPS_LONGITUDE," + "GPS_SATS," + "TILT_X," + "TILT_Y," + "CMD_ECHO" + "\n")
+		//Formation of CSV & TXT
+		data := "1007," + fmt.Sprint(time.Now().Format("15:04:05.00")) + "," + fmt.Sprint(PacketCount) + "," + 
+				"S," + "STATE," + fmt.Sprint(TestAlt) + "m," + fmt.Sprint(backend.HS_DEPLOYED) + "," + 
+				fmt.Sprint(backend.PS_DEPLOYED) + "," + fmt.Sprint(backend.MAST_RAISED) + "," + fmt.Sprint(Temperature) + 
+				"*F," + fmt.Sprint(Pressure) + "hPa," + "3.3," + "GPS_TIME," + "GPS_ALTITUDE," + 
+				"GPS_LATITUDE," + "GPS_LONGITUDE," + "GPS_SATS," + "TILT_X," + "TILT_Y," + "CMD_ECHO" + "\n"
+		backend.WriteToCSV(data)
+		backend.WriteToTXT(data)
+
+		//XBEE OUT
+		packet := backend.ToPacket(data)
+		length := len(packet)
+		backend.SendPacket("COM13", packet, length)
+		PacketCount+=1
 
 		//delay
 		time.Sleep(time.Second)
