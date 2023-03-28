@@ -47,7 +47,7 @@ func main() {
 		Pressure = backend.GeneratePressure(TestAlt, Temperature)
 	
 		fmt.Println(fmt.Sprint(CurrentTime))
-		backend.PacketCount += 1 
+		PacketCount += 1 
 
 		//Formation of CSV
 		backend.WriteToCSV(fmt.Sprint(CurrentTime) + "s   :   " + fmt.Sprint(TestAlt) + "m\n")
