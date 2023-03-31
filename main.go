@@ -61,7 +61,7 @@ func main() {
 		//XBEE OUT
 		packet := backend.ToPacket(data)
 		length := len(packet)
-		fmt.Println(length) //because the compiler will not let you run the program if there is an unused packet omg its so annoying i want to shit all over googles headquarters, like just make it a warning why does it have to be so complicated i want to run the program without having to comment out or delete the variable PLEASEQ!@@>@>>!>!>!?!?!
+		fmt.Println(length) //because the compiler will not let you run the program if there is an unused variable omg its so annoying i want to shit all over googles headquarters, like just make it a warning why does it have to be so complicated i want to run the program without having to comment out or delete the variable PLEASEQ!@@>@>>!>!>!?!?!
 		//backend.SendPacket("COM13", packet, length)
 		PacketCount+=1
 
