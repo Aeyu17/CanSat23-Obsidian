@@ -9,7 +9,7 @@ window.onload = function () {
 
     var altChart = new CanvasJS.Chart("altitude", {
         title :{
-            text: "Altitude"
+            text: "Altitude (m)"
         },
         data: [{
             type: "spline",
@@ -19,7 +19,7 @@ window.onload = function () {
     });
     var tempChart = new CanvasJS.Chart("temperature", {
         title :{
-            text: "Temperature"
+            text: "Temperature (°C)"
         },
         data: [{
             type: "spline",
@@ -29,7 +29,7 @@ window.onload = function () {
     })
     var presChart = new CanvasJS.Chart("pressure", {
         title :{
-            text: "Pressure"
+            text: "Pressure (kPa)"
         },
         data: [{
             type: "spline",
@@ -39,7 +39,7 @@ window.onload = function () {
     })
     var tiltChart = new CanvasJS.Chart("tilt", {
         title :{
-            text: "Tilt"
+            text: "Tilt (°)"
         },
         data: [{
             type: "spline",
@@ -49,7 +49,7 @@ window.onload = function () {
     })
     var locChart = new CanvasJS.Chart("location", {
         title :{
-            text: "Location"
+            text: "Location (°)"
         },
         data: [{
             type: "spline",
@@ -59,7 +59,7 @@ window.onload = function () {
     })
     var voltChart = new CanvasJS.Chart("voltage", {
         title :{
-            text: "Voltage"
+            text: "Voltage (V)"
         },
         data: [{
             type: "spline",
