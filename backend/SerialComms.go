@@ -7,7 +7,7 @@
 // )
 
 // func GetPacket(port string, baud int) (data string) {
-// 	c := &serial.Config{Name: port, Baud: 9600}
+// 	c := &serial.Config{Name: port, Baud: baud}
 // 	s, err := serial.OpenPort(c)
 // 	if err != nil {
 // 		log.Fatal(err)
