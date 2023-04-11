@@ -155,5 +155,13 @@ window.onload = function () {
 }
 
 function buttontest(){
-    console.log("AAAAAAAAAA");
+    console.log("W")
+    // fetch("localhost:8080", {
+    //     method: "POST"
+    //     body: JSON.stringify({
+    //         userID: 1,
+    //         title: ""
+    //     })
+    // });
+
 }
