@@ -1,3 +1,16 @@
+var pieSocket = new PieSocket({
+    clusterId: "demo",
+    apiKey: "oCdCMcMPQpbvNjUIzqtvF1d2X2okWpDQj4AwARJuAgtjhzKxVEjQU6IdCjwm",
+    notifySelf: true
+});
+
+var channel;
+pieSocket.subscribe("command").then((ch)=>{
+    channel = ch;
+    console.log("Channel is ready.")
+})
+
+
 window.onload = function () {
 
     var alts = [];
@@ -155,13 +168,10 @@ window.onload = function () {
 }
 
 function buttontest(){
-    console.log("W")
-    // fetch("localhost:8080", {
-    //     method: "POST"
-    //     body: JSON.stringify({
-    //         userID: 1,
-    //         title: ""
-    //     })
-    // });
+    channel.publish("new_message", {
+        from: "Obsidian Front End",
+        message: "Button Test"
+    })
 
+    
 }
