@@ -28,6 +28,36 @@ func reader(conn *websocket.Conn) {
 
 		log.Println(string(p))
 
+		switch string(p) {
+		case "CXON":
+			fmt.Println("CXON ACTIVATED")
+		case "CXOFF":
+			fmt.Println("CXOFF ACTIVATED")
+		case "STGPS":
+			fmt.Println("STGPS ACTIVATED")
+        // case "STCUS": figure it out bozo
+		case "SIME":
+			fmt.Println("SIME ACTIVATED")
+		case "SIMD":
+			fmt.Println("SIMD ACTIVATED")
+		case "SIMA":
+			fmt.Println("SIMA ACTIVATED")
+		case "CAL":
+			fmt.Println("CAL ACTIVATED")
+		case "ACTMR":
+			fmt.Println("ACTMR ACTIVATED")
+		case "ACTHS":
+			fmt.Println("ACTHS ACTIVATED")
+		case "ACTPC":
+			fmt.Println("ACTPC ACTIVATED")
+		case "ACTAB":
+			fmt.Println("ACTAB ACTIVATED")
+		case "ACTLED":
+			fmt.Println("ACTLED ACTIVATED")
+		default:
+			fmt.Println("OTHER MESSAGE RECEIVED")
+		}
+
 		if err := conn.WriteMessage(messageType, p); err != nil {
 			log.Println(err)
 			return

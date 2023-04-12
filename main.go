@@ -36,7 +36,7 @@ func main() {
 	//starting line for the text file
 	backend.WriteToTXT("TEAM_ID, MISSION_TIME, PACKET_COUNT, MODE, STATE, ALTITUDE, HS_DEPLOYED, PS_DEPLOYED, MAST_RAISED, TEMPERATURE, PRESSURE, VOLTAGE, GPS_TIME, GPS_ALTITUDE, GPS_LATITUDE, GPS_LONGITUDE, GPS_SATS, TILT_X, TILT_Y, CMD_ECHO\n\n")
 
-	for backend.FlightStatus != true{ 
+	for !backend.FlightStatus { 
 		PreviousTime = CurrentTime
 		CurrentTime = float64(time.Since(Start)) //calculates time since the start of the timer
 		CurrentTime = math.Round(CurrentTime/10000000)/100 //rounds currentTime to the hundredths place

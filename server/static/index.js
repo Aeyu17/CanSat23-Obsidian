@@ -1,17 +1,15 @@
-var pieSocket = new PieSocket({
-    clusterId: "demo",
-    apiKey: "oCdCMcMPQpbvNjUIzqtvF1d2X2okWpDQj4AwARJuAgtjhzKxVEjQU6IdCjwm",
-    notifySelf: true
-});
-
-var channel;
-pieSocket.subscribe("command").then((ch)=>{
-    channel = ch;
-    console.log("Channel is ready.")
-})
-
-
 window.onload = function () {
+    var gcsSocket = new WebSocket("ws://localhost:8080/ws");
+
+    gcsSocket.onmessage = function (event) {
+        console.log(event.data)
+    };
+
+    var testBtn = document.getElementById("testBtn");
+    testBtn.addEventListener("click", function (e) {
+        gcsSocket.send("Test Button Clicked");
+        e.preventDefault();
+    });
 
     var alts = [];
     var temps = [];
@@ -164,14 +162,5 @@ window.onload = function () {
     
     updateChart(dataLength); 
     setInterval(function(){ updateChart() }, updateInterval); 
-    
-}
-
-function buttontest(){
-    channel.publish("new_message", {
-        from: "Obsidian Front End",
-        message: "Button Test"
-    })
-
     
 }
