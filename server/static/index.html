@@ -38,14 +38,21 @@
             <div class="col-sm-3 sidebar">
                 <div class="col justify-content-center align-items-center">
                     <div class="col" id="TimeLabel">Time: 00:00:00</div>
+                    <div class="col" id="PacketCount">Packet Count: 0</div>
+                    <div class="col" id="Mode">Mode: F</div>
+                    <div class="col" id="State">State: Not Connected</div>
+                    <div class="col" id="HSStatus">Heat Shield Deployed: N</div>
+                    <div class="col" id="PCStatus">Parachute Deployed: N</div>
+                    <div class="col" id="MastStatus">Flag Raised: N</div>
                     <div class="col" id="VoltageLabel">Voltage: 6V</div>
+                    <div class="col" id="GPSSats">SIVs: 0</div>
+                    <div class="col" id="CMDEcho">Command Echo: None</div>
+
                     <button type="button" id="testBtn">Test Button</button>
                     <div>
                         <input type="checkbox" id="telemetryToggle" name="telemetryToggle">
                         <label for="telemetryToggle">Telemetry</label>
                     </div>
-                    <button type="button" id="setGPSTimeBtn">Set GPS Time</button>
-                    <button type="button" id="setCurTimeBtn">Set Current Time</button>
                     <!--
                     custom set time??
                     <form class="gps">
@@ -54,11 +61,15 @@
                     </form>
                     -->
                     <!-- set up SIMA, SIME, SIMD pls-->
-                    <div class="col-sm-2">
+                    <div class="row-sm-2">
+                        <button type="button" id="setGPSTimeBtn">Set GPS Time</button>
+                        <button type="button" id="setCurTimeBtn">Set Current Time</button>
                         <button type="button" id="calBtn">Calibrate Altitude</button>
                         <button type="button" id="mrBtn">Manual Release</button>
                         <button type="button" id="hsBtn">Heat Shield Deploy</button>
                         <button type="button" id="pcBtn">Parachute Release</button>
+                        <button type="button" id="pingBtn">Ping</button>
+                        <button type="button" id="resetBtn">Reset</button>
                     </div>
                     <div>
                         <input type="checkbox" id="audioToggle" name="audioToggle">

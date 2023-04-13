@@ -35,7 +35,6 @@ func reader(conn *websocket.Conn) {
 			fmt.Println("CXOFF ACTIVATED")
 		case "STGPS":
 			fmt.Println("STGPS ACTIVATED")
-        // case "STCUS": figure it out bozo
 		case "SIME":
 			fmt.Println("SIME ACTIVATED")
 		case "SIMD":
@@ -54,8 +53,16 @@ func reader(conn *websocket.Conn) {
 			fmt.Println("ACTAB ACTIVATED")
 		case "ACTLED":
 			fmt.Println("ACTLED ACTIVATED")
+		case "PING":
+			fmt.Println("PING ACTIVATED")
+		case "RESET":
+			fmt.Println("RESET ACTIVATED")
 		default:
-			fmt.Println("OTHER MESSAGE RECEIVED")
+			if string(p)[0:2] == "ST" {
+				fmt.Println("STCUS ACTIVATED")
+			} else {
+				fmt.Println("OTHER MESSAGE RECEIVED")
+			}
 		}
 
 		if err := conn.WriteMessage(messageType, p); err != nil {

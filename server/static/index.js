@@ -27,11 +27,24 @@ window.onload = function () {
         e.preventDefault();
     });
 
-    // var setCurTimeBtn = document.getElementById("setCurTimeBtn");
-    // setCurTimeBtn.addEventListener("click", function(e){
-    //     // send the time to the backend
-    //     e.preventDefault();
-    // });
+    var setCurTimeBtn = document.getElementById("setCurTimeBtn");
+    setCurTimeBtn.addEventListener("click", function(e){
+        const d = new Date();
+        let hour = d.getUTCHours().toString();
+        let minute = d.getUTCMinutes().toString();
+        let second = d.getUTCSeconds().toString();
+        if (hour.length == 1){
+            hour = "0" + hour;
+        }
+        if (minute.length == 1){
+            minute = "0" + minute;
+        }
+        if (second.length == 1){
+            second = "0" + second;
+        }
+        gcsSocket.send("ST" + hour + ":" + minute + ":" + second);
+        e.preventDefault();
+    });
 
     var calBtn = document.getElementById("calBtn");
     calBtn.addEventListener("click", function (e){
@@ -66,6 +79,18 @@ window.onload = function () {
     var ledToggle = document.getElementById("ledToggle");
     ledToggle.addEventListener("change", function (e){
         gcsSocket.send("ACTLED");
+        e.preventDefault();
+    });
+
+    var pingBtn = document.getElementById("pingBtn");
+    pingBtn.addEventListener("click", function (e){
+        gcsSocket.send("PING");
+        e.preventDefault();
+    });
+
+    var resetBtn = document.getElementById("resetBtn");
+    resetBtn.addEventListener("click", function (e){
+        gcsSocket.send("RESET");
         e.preventDefault();
     });
 
