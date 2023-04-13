@@ -40,7 +40,34 @@
                     <div class="col" id="TimeLabel">Time: 00:00:00</div>
                     <div class="col" id="VoltageLabel">Voltage: 6V</div>
                     <button type="button" id="testBtn">Test Button</button>
-
+                    <div>
+                        <input type="checkbox" id="telemetryToggle" name="telemetryToggle">
+                        <label for="telemetryToggle">Telemetry</label>
+                    </div>
+                    <button type="button" id="setGPSTimeBtn">Set GPS Time</button>
+                    <button type="button" id="setCurTimeBtn">Set Current Time</button>
+                    <!--
+                    custom set time??
+                    <form class="gps">
+                        <input id="gpsinput"></input>
+                        <input type="submit"></input>
+                    </form>
+                    -->
+                    <!-- set up SIMA, SIME, SIMD pls-->
+                    <div class="col-sm-2">
+                        <button type="button" id="calBtn">Calibrate Altitude</button>
+                        <button type="button" id="mrBtn">Manual Release</button>
+                        <button type="button" id="hsBtn">Heat Shield Deploy</button>
+                        <button type="button" id="pcBtn">Parachute Release</button>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="audioToggle" name="audioToggle">
+                        <label for="audioToggle">Audio Beacon Toggle</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="ledToggle" name="ledToggle">
+                        <label for="ledToggle">LED Toggle</label>
+                    </div>
                 </div>
             </div>
         </div>

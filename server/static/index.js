@@ -11,6 +11,64 @@ window.onload = function () {
         e.preventDefault();
     });
 
+    var telemToggle = document.getElementById("telemetryToggle");
+    telemToggle.addEventListener("change", function (e){
+        if (telemToggle.checked){
+            gcsSocket.send("CXON");
+        } else {
+            gcsSocket.send("CXOFF");
+        }
+        e.preventDefault();
+    });
+
+    var setgpsTimeBtn = document.getElementById("setGPSTimeBtn");
+    setgpsTimeBtn.addEventListener("click", function (e){
+        gcsSocket.send("STGPS");
+        e.preventDefault();
+    });
+
+    // var setCurTimeBtn = document.getElementById("setCurTimeBtn");
+    // setCurTimeBtn.addEventListener("click", function(e){
+    //     // send the time to the backend
+    //     e.preventDefault();
+    // });
+
+    var calBtn = document.getElementById("calBtn");
+    calBtn.addEventListener("click", function (e){
+        gcsSocket.send("CAL");
+        e.preventDefault();
+    });
+
+    var mrBtn = document.getElementById("mrBtn");
+    mrBtn.addEventListener("click", function (e){
+        gcsSocket.send("ACTMR");
+        e.preventDefault();
+    });
+
+    var hsBtn = document.getElementById("hsBtn");
+    hsBtn.addEventListener("click", function (e){
+        gcsSocket.send("ACTHS");
+        e.preventDefault();
+    });
+
+    var pcBtn = document.getElementById("pcBtn");
+    pcBtn.addEventListener("click", function (e){
+        gcsSocket.send("ACTPC");
+        e.preventDefault();
+    });
+
+    var audioToggle = document.getElementById("audioToggle");
+    audioToggle.addEventListener("change", function (e){
+        gcsSocket.send("ACTAB");
+        e.preventDefault();
+    });
+
+    var ledToggle = document.getElementById("ledToggle");
+    ledToggle.addEventListener("change", function (e){
+        gcsSocket.send("ACTLED");
+        e.preventDefault();
+    });
+
     var alts = [];
     var temps = [];
     var press = [];
