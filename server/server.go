@@ -18,6 +18,15 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:		func (r *http.Request) bool {return true},
 }
 
+var ws *websocket.Conn;
+
+func ServerWrite(message string) {
+	if err := ws.WriteMessage(1, []byte(message)); err != nil {
+		log.Println(err)
+	}
+}
+
+
 func reader(conn *websocket.Conn) {
 	for {
 		messageType, p, err := conn.ReadMessage()
@@ -73,7 +82,8 @@ func reader(conn *websocket.Conn) {
 }
 
 func wsEndpoint(w http.ResponseWriter, r *http.Request) {
-	ws, err := upgrader.Upgrade(w, r, nil)
+	ws1, err := upgrader.Upgrade(w, r, nil)
+	ws = ws1
 	if err != nil {
 		log.Println(err)
 	}
