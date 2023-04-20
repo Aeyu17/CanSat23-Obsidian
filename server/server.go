@@ -6,6 +6,10 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"time"
+	"strconv"
+
+	backend "github.com/Aeyu17/CanSat23-Obsidian/backend"
 
 	"github.com/gorilla/websocket"
 )
@@ -19,6 +23,11 @@ var upgrader = websocket.Upgrader{
 }
 
 var ws *websocket.Conn;
+var mode string;
+var simActive bool;
+
+const PORT = "COM5"
+const BAUD = 9600
 
 func ServerWrite(message string) {
 	if err := ws.WriteMessage(1, []byte(message)); err != nil {
@@ -39,33 +48,75 @@ func reader(conn *websocket.Conn) {
 
 		switch string(p) {
 		case "CXON":
-			fmt.Println("CXON ACTIVATED")
+			fmt.Println("CXON CALLED")
+			mode = "flight"
+			backend.SendPacket(PORT, BAUD, "CMD,1070,CX,ON")
+
 		case "CXOFF":
-			fmt.Println("CXOFF ACTIVATED")
+			fmt.Println("CXOFF CALLED")
+			mode = "none"
+			backend.SendPacket(PORT, BAUD, "CMD,1070,CX,OFF")
+
 		case "STGPS":
-			fmt.Println("STGPS ACTIVATED")
+			fmt.Println("STGPS CALLED")
+			backend.SendPacket(PORT, BAUD, "CMD,1070,ST,GPS")
+
 		case "SIME":
-			fmt.Println("SIME ACTIVATED")
+			fmt.Println("SIME CALLED")
+			mode = "sim"
+			backend.SendPacket(PORT, BAUD, "CMD,1070,SIM,ENABLE")
+
 		case "SIMD":
-			fmt.Println("SIMD ACTIVATED")
+			fmt.Println("SIMD CALLED")
+			mode = "flight"
+			simActive = false
+			backend.SendPacket(PORT, BAUD, "CMD,1070,SIM,DISABLE")
+
 		case "SIMA":
-			fmt.Println("SIMA ACTIVATED")
+			fmt.Println("SIMA CALLED")
+			simActive = true
+			backend.SendPacket(PORT, BAUD, "CMD,1070,SIM,ACTIVATE")
+
 		case "CAL":
-			fmt.Println("CAL ACTIVATED")
+			fmt.Println("CAL CALLED")
+			backend.SendPacket(PORT, BAUD, "CMD,1070,CAL")
+
 		case "ACTMR":
-			fmt.Println("ACTMR ACTIVATED")
+			fmt.Println("ACTMR CALLED")
+			backend.SendPacket(PORT, BAUD, "CMD,1070,ACT,MR")
+			
 		case "ACTHS":
-			fmt.Println("ACTHS ACTIVATED")
+			fmt.Println("ACTHS CALLED")
+			backend.SendPacket(PORT, BAUD, "CMD,1070,ACT,HS")
+
 		case "ACTPC":
-			fmt.Println("ACTPC ACTIVATED")
+			fmt.Println("ACTPC CALLED")
+			backend.SendPacket(PORT, BAUD, "CMD,1070,ACT,PC")
+
 		case "ACTAB":
-			fmt.Println("ACTAB ACTIVATED")
+			fmt.Println("ACTAB CALLED")
+			backend.SendPacket(PORT, BAUD, "CMD,1070,ACT,AB")
+
 		case "ACTLED":
-			fmt.Println("ACTLED ACTIVATED")
+			fmt.Println("ACTLED CALLED")
+			backend.SendPacket(PORT, BAUD, "CMD,1070,ACT,LED")
+
 		case "PING":
-			fmt.Println("PING ACTIVATED")
+			fmt.Println("PING CALLED")
+			start := time.Now()
+
+			backend.SendPacket(PORT, BAUD, "CMD,1070,PING")
+			backend.GetPacket(PORT, BAUD) // async process, may need to check
+
+			duration := time.Since(start)
+			fmt.Println("Pong! " + strconv.FormatInt(duration.Milliseconds(), 5))
+
 		case "RESET":
-			fmt.Println("RESET ACTIVATED")
+			fmt.Println("RESET CALLED")
+
+		case "GEN":
+			mode = "gen"
+
 		default:
 			if string(p)[0:2] == "ST" {
 				fmt.Println("STCUS ACTIVATED")
@@ -111,6 +162,10 @@ func InitServer() {
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func GetMode() (mode string, simActive bool){
+	return mode, simActive
 }
 
 
