@@ -21,7 +21,6 @@ const baud = 9600
 
 func packetTransceiver() {
 	fmt.Println("Running in " + mode + " mode.")
-	var i = 0
 	for {
 		// RECEIVER
 		var packet string;
@@ -36,6 +35,7 @@ func packetTransceiver() {
 			send it to the cansat
 			wait for a packet back
 			*/
+			
 			packet = backend.GetPacket(port, baud)
 			backend.WriteToCSV(packet, "simlaunchdata.csv")
 
