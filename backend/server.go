@@ -135,7 +135,6 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 		for wsActive {
 			wsChan <- ws
 		}
-		return
 	}()
 	if err != nil {
 		log.Println(err)
