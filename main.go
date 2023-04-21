@@ -5,7 +5,6 @@ import (
 	"time"
 
 	backend "github.com/Aeyu17/CanSat23-Obsidian/backend"
-	server "github.com/Aeyu17/CanSat23-Obsidian/server"
 )
 
 var mode = "none"
@@ -14,7 +13,7 @@ var mode = "none"
 flight - proper flight mode (default)
 sim - cansat designated sim mode
 gen - ground station generator sim mode
-none - 
+none - no mode active
 */
 
 const PORT = "COM5"
@@ -53,7 +52,7 @@ func packetTransceiver() {
 		}
 
 		// TRANSMITTER
-		server.ServerWrite(packet)
+		backend.ServerWrite(packet)
 	}
 }
 
@@ -61,7 +60,7 @@ func main() {
 	go packetTransceiver()
 
 	fmt.Println("Starting Ground Control Station...")
-	server.InitServer() // should be the last thing run
+	backend.InitServer() // should be the last thing run
 	
 	
 }
