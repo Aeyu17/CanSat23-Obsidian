@@ -106,7 +106,6 @@ func reader(conn *websocket.Conn) {
 			start := time.Now()
 
 			backend.SendPacket(PORT, BAUD, "CMD,1070,PING")
-			backend.GetPacket(PORT, BAUD) // async process, may need to check
 
 			duration := time.Since(start)
 			fmt.Println("Pong! " + strconv.FormatInt(duration.Milliseconds(), 5))

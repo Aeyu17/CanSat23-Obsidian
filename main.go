@@ -17,10 +17,6 @@ gen - ground station generator sim mode
 none - 
 */
 
-const PORT = "COM5"
-const BAUD = 9600
-// if you change this, you need to go to server.go and change that too
-
 func packetTransceiver() {	
 	fmt.Println("Running in " + mode + " mode.")
 	for {
@@ -28,7 +24,7 @@ func packetTransceiver() {
 		var packet string;
 		switch mode {
 		case "flight":
-			packet = backend.GetPacket(PORT, BAUD)
+			packet = backend.ReceivePacket(backend.PORT, backend.BAUD)
 			backend.WriteToCSV(packet, "flightlaunchdata.csv")
 
 		case "sim":
@@ -38,9 +34,9 @@ func packetTransceiver() {
 				mode = "flight"
 				continue
 			}
-			backend.SendPacket(PORT, BAUD, simpPacket)
+			backend.SendPacket(backend.PORT, backend.BAUD, simpPacket)
 
-			packet = backend.GetPacket(PORT, BAUD)
+			packet = backend.ReceivePacket(backend.PORT, backend.BAUD)
 			backend.WriteToCSV(packet, "simlaunchdata.csv")
 
 		case "gen":

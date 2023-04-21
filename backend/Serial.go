@@ -7,7 +7,10 @@ import (
 	"github.com/tarm/serial"
 )
 
-func GetPacket(port string, baud int) (data string) {
+const PORT = "COM5"
+const BAUD = 9600
+
+func ReceivePacket(port string, baud int) (data string) {
 	c := &serial.Config{Name: port, Baud: baud}
 	s, err := serial.OpenPort(c)
 	if err != nil {
