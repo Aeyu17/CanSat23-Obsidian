@@ -20,11 +20,13 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:		func (r *http.Request) bool {return true},
 }
 
-var ws *websocket.Conn;
-var Mode string;
+var Mode = "gen";
 var SimActive bool;
+var wsChan = make(chan *websocket.Conn)
+var wsActive bool;
 
 func ServerWrite(message string) {
+	ws := <- wsChan
 	if err := ws.WriteMessage(1, []byte(message)); err != nil {
 		log.Println(err)
 	}
@@ -127,8 +129,14 @@ func reader(conn *websocket.Conn) {
 }
 
 func wsEndpoint(w http.ResponseWriter, r *http.Request) {
-	ws1, err := upgrader.Upgrade(w, r, nil)
-	ws = ws1
+	ws, err := upgrader.Upgrade(w, r, nil)
+	wsActive = true
+	go func() {
+		for wsActive {
+			wsChan <- ws
+		}
+		return
+	}()
 	if err != nil {
 		log.Println(err)
 	}
@@ -140,6 +148,9 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 	}
 
 	reader(ws)
+
+	wsActive = false
+	log.Println("Page was closed.")
 }
 
 func InitServer() {

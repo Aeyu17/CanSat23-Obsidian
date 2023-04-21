@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
+	"time"
 	"container/list"
 
 	backend "github.com/Aeyu17/CanSat23-Obsidian/backend"
 )
 
-var mode = "none"
+var mode = backend.Mode
 // can be flight, sim, and gen
 /*
 flight - proper flight mode (default)
@@ -47,12 +48,17 @@ func packetTransceiver(l *list.List) {
 		}
 
 		// TRANSMITTER
+		if packet == "Empty" {
+			continue
+		}
+		fmt.Println(packet)
 		backend.ServerWrite(packet)
+		time.Sleep(time.Second/2)
 	}
 }
 
 func main() {
-	var packetChannel chan string;
+	var packetChannel = make(chan string, 100)
 
 	go backend.PacketReceiver(packetChannel)
 	go backend.PacketQueuer(packetChannel, backend.PacketList)
@@ -61,6 +67,4 @@ func main() {
 
 	fmt.Println("Starting Ground Control Station...")
 	backend.InitServer() // should be the last thing run
-	
-	
 }
