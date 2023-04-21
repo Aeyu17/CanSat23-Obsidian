@@ -22,14 +22,13 @@ var upgrader = websocket.Upgrader{
 
 var ws *websocket.Conn;
 var Mode string;
-var simActive bool;
+var SimActive bool;
 
 func ServerWrite(message string) {
 	if err := ws.WriteMessage(1, []byte(message)); err != nil {
 		log.Println(err)
 	}
 }
-
 
 func reader(conn *websocket.Conn) {
 	for {
@@ -64,12 +63,12 @@ func reader(conn *websocket.Conn) {
 		case "SIMD":
 			fmt.Println("SIMD CALLED")
 			Mode = "flight"
-			simActive = false
+			SimActive = false
 			SendPacket(PORT, BAUD, "CMD,1070,SIM,DISABLE")
 
 		case "SIMA":
 			fmt.Println("SIMA CALLED")
-			simActive = true
+			SimActive = true
 			SendPacket(PORT, BAUD, "CMD,1070,SIM,ACTIVATE")
 
 		case "CAL":
@@ -101,6 +100,7 @@ func reader(conn *websocket.Conn) {
 			start := time.Now()
 
 			SendPacket(PORT, BAUD, "CMD,1070,PING")
+			GetPingPacket(PacketList)
 
 			duration := time.Since(start)
 			fmt.Println("Pong! " + strconv.FormatInt(duration.Milliseconds(), 5))
@@ -157,9 +157,3 @@ func InitServer() {
 		log.Fatal(err)
 	}
 }
-
-func GetMode() (mode string, simActive bool){
-	return mode, simActive
-}
-
-

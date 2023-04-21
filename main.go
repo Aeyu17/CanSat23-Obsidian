@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"time"
+	"container/list"
 
 	backend "github.com/Aeyu17/CanSat23-Obsidian/backend"
 )
@@ -16,14 +16,14 @@ gen - ground station generator sim mode
 none - no mode active
 */
 
-func packetTransceiver() {	
+func packetTransceiver(l *list.List) {	
 	fmt.Println("Running in " + mode + " mode.")
 	for {
 		// RECEIVER
 		var packet string;
 		switch mode {
 		case "flight":
-			packet = backend.ReceivePacket(backend.PORT, backend.BAUD)
+			packet = backend.GetDataPacket(l)
 			backend.WriteToCSV(packet, "flightlaunchdata.csv")
 
 		case "sim":
@@ -35,13 +35,12 @@ func packetTransceiver() {
 			}
 			backend.SendPacket(backend.PORT, backend.BAUD, simpPacket)
 
-			packet = backend.ReceivePacket(backend.PORT, backend.BAUD)
+			packet = backend.GetDataPacket(l)
 			backend.WriteToCSV(packet, "simlaunchdata.csv")
 
 		case "gen":
-			packet = backend.GeneratePacket()
+			packet = backend.GetDataPacket(l)
 			backend.WriteToCSV(packet, "genlaunchdata.csv")
-			time.Sleep(time.Second/2)
 
 		default:
 			continue
@@ -53,7 +52,12 @@ func packetTransceiver() {
 }
 
 func main() {
-	go packetTransceiver()
+	var packetChannel chan string;
+
+	go backend.PacketReceiver(packetChannel)
+	go backend.PacketQueuer(packetChannel, backend.PacketList)
+
+	go packetTransceiver(backend.PacketList)
 
 	fmt.Println("Starting Ground Control Station...")
 	backend.InitServer() // should be the last thing run

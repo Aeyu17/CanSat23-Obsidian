@@ -51,7 +51,7 @@ func ReadPressureCSV(pcsv string) (pcmd string){
 		cmdArr, err = r.Read()
 
 		if err == io.EOF {
-			lineIndex = 0
+			lineIndex = -1
 			break
 		}
 		if err != nil {
