@@ -2,15 +2,19 @@ package backend
 
 import (
 	"container/list"
-	"strings"
-)
+	"strings")
 
 func PacketReceiver(c chan string) {
 	for {
-		packet := ReceivePacket(PORT, BAUD)
-		if strings.Split(packet, ",")[0] == "1070" {
+		if Mode == "flight" || Mode == "sim" {
+			packet := ReceivePacket(PORT, BAUD)
+			if strings.Split(packet, ",")[0] == "1070" {
+				c <- packet
+			}
+		} else if Mode == "gen" {
+			packet := GeneratePacket()
 			c <- packet
-		}
+		} else {continue}
 	}
 }
 

@@ -1,4 +1,4 @@
-package server
+package backend
 
 import (
 	"embed"
@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"time"
 	"strconv"
-
-	backend "github.com/Aeyu17/CanSat23-Obsidian/backend"
 
 	"github.com/gorilla/websocket"
 )
@@ -23,11 +21,8 @@ var upgrader = websocket.Upgrader{
 }
 
 var ws *websocket.Conn;
-var mode string;
+var Mode string;
 var simActive bool;
-
-const PORT = "COM5"
-const BAUD = 9600
 
 func ServerWrite(message string) {
 	if err := ws.WriteMessage(1, []byte(message)); err != nil {
@@ -49,63 +44,63 @@ func reader(conn *websocket.Conn) {
 		switch string(p) {
 		case "CXON":
 			fmt.Println("CXON CALLED")
-			mode = "flight"
-			backend.SendPacket(PORT, BAUD, "CMD,1070,CX,ON")
+			Mode = "flight"
+			SendPacket(PORT, BAUD, "CMD,1070,CX,ON")
 
 		case "CXOFF":
 			fmt.Println("CXOFF CALLED")
-			mode = "none"
-			backend.SendPacket(PORT, BAUD, "CMD,1070,CX,OFF")
+			Mode = "none"
+			SendPacket(PORT, BAUD, "CMD,1070,CX,OFF")
 
 		case "STGPS":
 			fmt.Println("STGPS CALLED")
-			backend.SendPacket(PORT, BAUD, "CMD,1070,ST,GPS")
+			SendPacket(PORT, BAUD, "CMD,1070,ST,GPS")
 
 		case "SIME":
 			fmt.Println("SIME CALLED")
-			mode = "sim"
-			backend.SendPacket(PORT, BAUD, "CMD,1070,SIM,ENABLE")
+			Mode = "sim"
+			SendPacket(PORT, BAUD, "CMD,1070,SIM,ENABLE")
 
 		case "SIMD":
 			fmt.Println("SIMD CALLED")
-			mode = "flight"
+			Mode = "flight"
 			simActive = false
-			backend.SendPacket(PORT, BAUD, "CMD,1070,SIM,DISABLE")
+			SendPacket(PORT, BAUD, "CMD,1070,SIM,DISABLE")
 
 		case "SIMA":
 			fmt.Println("SIMA CALLED")
 			simActive = true
-			backend.SendPacket(PORT, BAUD, "CMD,1070,SIM,ACTIVATE")
+			SendPacket(PORT, BAUD, "CMD,1070,SIM,ACTIVATE")
 
 		case "CAL":
 			fmt.Println("CAL CALLED")
-			backend.SendPacket(PORT, BAUD, "CMD,1070,CAL")
+			SendPacket(PORT, BAUD, "CMD,1070,CAL")
 
 		case "ACTMR":
 			fmt.Println("ACTMR CALLED")
-			backend.SendPacket(PORT, BAUD, "CMD,1070,ACT,MR")
+			SendPacket(PORT, BAUD, "CMD,1070,ACT,MR")
 			
 		case "ACTHS":
 			fmt.Println("ACTHS CALLED")
-			backend.SendPacket(PORT, BAUD, "CMD,1070,ACT,HS")
+			SendPacket(PORT, BAUD, "CMD,1070,ACT,HS")
 
 		case "ACTPC":
 			fmt.Println("ACTPC CALLED")
-			backend.SendPacket(PORT, BAUD, "CMD,1070,ACT,PC")
+			SendPacket(PORT, BAUD, "CMD,1070,ACT,PC")
 
 		case "ACTAB":
 			fmt.Println("ACTAB CALLED")
-			backend.SendPacket(PORT, BAUD, "CMD,1070,ACT,AB")
+			SendPacket(PORT, BAUD, "CMD,1070,ACT,AB")
 
 		case "ACTLED":
 			fmt.Println("ACTLED CALLED")
-			backend.SendPacket(PORT, BAUD, "CMD,1070,ACT,LED")
+			SendPacket(PORT, BAUD, "CMD,1070,ACT,LED")
 
 		case "PING":
 			fmt.Println("PING CALLED")
 			start := time.Now()
 
-			backend.SendPacket(PORT, BAUD, "CMD,1070,PING")
+			SendPacket(PORT, BAUD, "CMD,1070,PING")
 
 			duration := time.Since(start)
 			fmt.Println("Pong! " + strconv.FormatInt(duration.Milliseconds(), 5))
@@ -114,7 +109,7 @@ func reader(conn *websocket.Conn) {
 			fmt.Println("RESET CALLED")
 
 		case "GEN":
-			mode = "gen"
+			Mode = "gen"
 
 		default:
 			if string(p)[0:2] == "ST" {
