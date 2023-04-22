@@ -174,7 +174,7 @@ window.onload = function () {
     var updateInterval = 1000;
     var dataLength = 50; // number of dataPoints visible at any point
     
-    var updateChart = function (count) {
+    var updateChart = function (count, packet) {
         count = count || 1;
         // count is number of times loop runs to generate random dataPoints.
         for (var j = 0; j < count; j++) {	
@@ -241,9 +241,8 @@ window.onload = function () {
         // update labels
         document.getElementById("TimeLabel").textContent = "Time: " + time + " s";
         document.getElementById("VoltageLabel").textContent = "Voltage: " + Math.round(100 * volt) / 100 + "V";
-    };
-    
-    updateChart(dataLength); 
+
+    }; 
     setInterval(function(){ updateChart() }, updateInterval); 
     
 }

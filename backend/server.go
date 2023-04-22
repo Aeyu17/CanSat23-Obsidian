@@ -24,12 +24,15 @@ var Mode = "gen";
 var SimActive bool;
 var wsChan = make(chan *websocket.Conn)
 var wsActive bool;
+var ServerWriting = false
 
 func ServerWrite(message string) {
 	ws := <- wsChan
+	ServerWriting = true
 	if err := ws.WriteMessage(1, []byte(message)); err != nil {
 		log.Println(err)
 	}
+	ServerWriting = false
 }
 
 func reader(conn *websocket.Conn) {

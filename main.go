@@ -1,14 +1,15 @@
 package main
 
 import (
+	"container/list"
 	"fmt"
 	"time"
-	"container/list"
 
 	backend "github.com/Aeyu17/CanSat23-Obsidian/backend"
 )
 
 var mode = backend.Mode
+
 // can be flight, sim, and gen
 /*
 flight - proper flight mode (default)
@@ -17,11 +18,11 @@ gen - ground station generator sim mode
 none - no mode active
 */
 
-func packetTransceiver(l *list.List) {	
+func packetTransceiver(l *list.List) {
 	fmt.Println("Running in " + mode + " mode.")
 	for {
 		// RECEIVER
-		var packet string;
+		var packet string
 		switch mode {
 		case "flight":
 			packet = backend.GetDataPacket(l)
@@ -52,8 +53,11 @@ func packetTransceiver(l *list.List) {
 			continue
 		}
 		fmt.Println(packet)
+		for backend.ServerWriting {
+			time.Sleep(time.Second / 100)
+		}
 		backend.ServerWrite(packet)
-		time.Sleep(time.Second/2)
+		time.Sleep(time.Second / 2)
 	}
 }
 
@@ -61,7 +65,7 @@ func main() {
 	var packetChannel = make(chan string, 100)
 
 	go backend.PacketReceiver(packetChannel)
-	go backend.PacketQueuer(packetChannel, backend.PacketList)
+	go backend.PacketEnqueuer(packetChannel, backend.PacketList)
 
 	go packetTransceiver(backend.PacketList)
 
