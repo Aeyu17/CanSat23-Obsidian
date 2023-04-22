@@ -41,7 +41,7 @@ float voltage;
 String missionTime = "00:00:00";
 int packetCount = 0;
 char flightMode = 'F';
-String flightState = "IDLE";
+String flightState = "READY"; // ONLY FOR DEBUG PURPOSES IF SHIT GOES WRONG ITS HERE BOZO
 char hs_deployed = 'N';
 char pc_deployed = 'N';
 char mast_raised = 'N';
@@ -52,6 +52,19 @@ int startHour;
 int startMinute;
 int startSecond;
 bool containerReleased;
+bool shieldDeployed;
+bool chuteReleased;
+bool flagRaised;
+bool bmpWorking = true;
+bool bnoWorking = true;
+bool samWorking = true;
+bool sdWorking = true;
+
+int ledPin = 27;
+int rServoPin = 32;
+int fServoPin = 15;
+int hServoPin = 14;
+int buzPin = 21;
 
 File packet_csv;
 Servo release_servo;
@@ -60,71 +73,109 @@ Servo hs_servo;
 
 
 ///////////////////////////////////// SETUP /////////////////////////////////////
-void setup() {
-
+void setup() {  
   Serial.begin(115200);
+  Serial1.begin(9600); // xbee communication
   Wire.begin();
 
   // BMP set up
   if (!bmp.begin_I2C()) {
-    while (1){
-      Serial.println("BMP NOT FOUND");
-    }
+    Serial.println("BMP NOT WORKING");
+    bmpWorking = false;
+    
+    temperature = -999;
+    altitude = -999;
+    pressure = -999;
+    alt_offset = -999;
+    last_alt = -999;
   }
-  bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_8X);
-  bmp.setPressureOversampling(BMP3_OVERSAMPLING_4X);
-  bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
-  bmp.setOutputDataRate(BMP3_ODR_50_HZ);
 
-  // get rid of bad altitude data
-  bmp.readAltitude(SEALEVELPRESSURE_HPA);
-  bmp.readAltitude(SEALEVELPRESSURE_HPA);
-  bmp.readAltitude(SEALEVELPRESSURE_HPA);
-
-  alt_offset = setDefaultAlt();
+  if (bmpWorking) {
+    Serial.println("BMP WORKING");
+    bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_8X);
+    bmp.setPressureOversampling(BMP3_OVERSAMPLING_4X);
+    bmp.setIIRFilterCoeff(BMP3_IIR_FILTER_COEFF_3);
+    bmp.setOutputDataRate(BMP3_ODR_50_HZ);
+  
+    // get rid of bad altitude data
+    bmp.readAltitude(SEALEVELPRESSURE_HPA);
+    bmp.readAltitude(SEALEVELPRESSURE_HPA);
+    bmp.readAltitude(SEALEVELPRESSURE_HPA);
+  
+    alt_offset = setDefaultAlt();
+  }
 
   // SAM set up
   if (!myGNSS.begin()){
-    while (1){
-      Serial.println("SAM NOT FOUND");
-    }
+    Serial.println("SAM NOT WORKING");
+
+    samWorking = false;
+    startHour = 0;
+    startMinute = 0;
+    startSecond = 0;
+    latitude = -999;
+    longitude = -999;
+    gps_altitude = -999;
+    siv = -999;
+    gps_time = "L";
+    gps_hour = "99";
+    gps_min = "99";
+    gps_sec = "99";
   }
   // myGNSS.enableDebugging(); // in case of error
   
-  myGNSS.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
-  myGNSS.saveConfigSelective(VAL_CFG_SUBSEC_IOPORT); //Save (only) the communications port settings to flash and BBR
-
+  if (samWorking){
+    Serial.println("SAM WORKING");
+    myGNSS.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
+    myGNSS.saveConfigSelective(VAL_CFG_SUBSEC_IOPORT); //Save (only) the communications port settings to flash and BBR
+    
+    startHour = myGNSS.getHour();
+    startMinute = myGNSS.getMinute();
+    startSecond = myGNSS.getSecond();
+  }
+  
   // BNO set up
   if (!bno.begin()){
-    while (1){
-      Serial.println("BNO NOT FOUND");
-    }
-  }
-  bno.setExtCrystalUse(true);
+    Serial.println("BNO NOT WORKING");
 
-  startHour = myGNSS.getHour();
-  startMinute = myGNSS.getMinute();
-  startSecond = myGNSS.getSecond();
+    bnoWorking = false;
+    tiltx = -999;
+    tilty = -999;
+  }
+  
+  if (bnoWorking) {
+    Serial.println("BNO WORKING");
+    bno.setExtCrystalUse(true);
+  }
 
   // SD set up
   if (!SD.begin()){
-    while (true){
-      Serial.println("SD DID NOT BEGIN PROPERLY");
-    }
+    Serial.println("SD NOT WORKING");
+
+    sdWorking = false;
   }
-  SD.remove("/testlaunchdata.csv");
-  packet_csv = SD.open("/testlaunchdata.csv", FILE_WRITE);
-  if (!packet_csv){
-    while (true){
+
+  if (sdWorking){
+    Serial.println("SD WORKING");
+    SD.remove("/testlaunchdata.csv");
+    packet_csv = SD.open("/testlaunchdata.csv", FILE_WRITE);
+    if (!packet_csv){
       Serial.println("SD CSV DID NOT OPEN PROPERLY");
     }
+    packet_csv.close();
   }
-  packet_csv.close();
-
+  
   // Servo set up
-  release_servo.attach(25); // may need to change
-  hs_servo.attach(26); // need to change
-  flag_servo.attach(27); // need to change
+  release_servo.attach(rServoPin); // may need to change
+  hs_servo.attach(hServoPin); // need to change
+  flag_servo.attach(fServoPin); // need to change
+
+  // MOSFET set up
+  pinMode(A5, INPUT);
+
+  // Camera set up
+  pinMode(A4, INPUT);
+  pinMode(A4, HIGH);
 }
 
 
@@ -154,21 +205,21 @@ void writeToFile(String packet, File file){
 
 // led setup 
 void ledBlink(){
-  pinMode(27,OUTPUT); // need to change
+  pinMode(ledPin,OUTPUT);
 
-  pinMode(27,HIGH);
-  delay(500);
-  pinMode(27,LOW);
-  delay(500);
+  pinMode(ledPin,HIGH);
+  delay(100);
+  pinMode(ledPin,LOW);
+  delay(100);
 }
 
 // buzzer setup
 void buzzer(){
-  pinMode(30, OUTPUT); // need to change 
+  pinMode(buzPin, OUTPUT);
 
-  pinMode(30,HIGH);
+  pinMode(buzPin,HIGH);
   delay(500);
-  pinMode(30,LOW);
+  pinMode(buzPin,LOW);
   delay(500);
 }
 
@@ -217,111 +268,72 @@ void debugPrintData(){
 
 ///////////////////////////////////// RELEASE MECHANISMS /////////////////////////////////////
 // initial rocket release
-void rocketRelease() {
+void containerRelease() {
+  if (containerReleased){
+    return;
+  }
+  pinMode(A5, HIGH);
+  containerReleased = true;
   release_servo.write(90);
-  delay(300);
+  pinMode(A5, LOW);
+}
+
+
+// first shield deploy
+void shieldDeploy() {
+  if (shieldDeployed){
+    return;
+  }
+  pinMode(A5, HIGH);
+  shieldDeployed = true;
+  hs_deployed = 'P';
+  flightState = "HSDEPLOYED";
+  hs_servo.write(2400); // don't know this number yet
+  pinMode(A5, LOW);
+}
+
+void shieldRetract() {
+  if (!shieldDeployed){
+    return;
+  }
+  pinMode(A5, HIGH);
+  shieldDeployed = false;
+  hs_servo.write(1700); // fuck???
+  pinMode(A5, LOW);
 }
 
 // parachute release
 void chuteRelease() {
+  if (chuteReleased){
+    return;
+  }
+  pinMode(A5, HIGH);
+  chuteReleased = true;
+  pc_deployed = 'C';
+  flightState = "PCDEPLOYED";
   release_servo.write(0);
-  delay(300);
-}
-
-// first shield deploy
-void shieldDeployOne() {
-  hs_servo.write(2400); // don't know this number yet
-  delay(300);
-}
-
-void shieldRetract() {
-;
-  
+  pinMode(A5, LOW);
 }
 
 
 // second shield deploy
 void upright() {
+  pinMode(A5, HIGH);
   hs_servo.write(180); // don't know this number yet
-  delay(300);
+  flightState = "LANDED";
+  shieldDeployed = true;
+  pinMode(A5, LOW);
 }
 
 // flag delpy
 void flagDeploy() {
+  pinMode(A5, HIGH);
+  mast_raised = 'M';
+  flagRaised = true;
   flag_servo.write(180); // don't know this number yet
-  delay(300);
+  pinMode(A5, LOW);
 }
 
-
-
-
-///////////////////////////////////// FLIGHT STAGES /////////////////////////////////////
-
-//////////////////////////////////////////////////////////////////////////// NEED HELP ////////////////////////////////////////////////////////////////////////////
-
-// ready to ascending state (0m to 700m)
-void stateReady() {
-  if (altitude >= 2 && altitude <= 700){
-    flightState = "ASCENDING";
-  }
-}
-
- 
-// ascending to descending state (0m to 700m to 500m)
-void stateAscending() {
-  if (altitude >= 700 && !containerReleased){
-    containerReleased = true;
-    rocketRelease();
-  }
-  else {
-    flightState = "DESCENDING";
-  }
-}
-
-
-// descending to releasing hs (700m to 500m)
-void stateDescending() {
-  if (altitude <= 500 && containerReleased) {
-    flightState = "HSDEPLOYED";
-  }
-}
-
-
-// shield_release (500m to 200m)
-void stateShieldRelease() {
-  if (hs_deployed == 'N') {
-    shieldDeployOne();
-    hs_deployed = 'P';
-  }
-  if (altitude <= 200) {
-    flightState = "PCDEPLOYED";
-  }
-}
-
-
-// chute_release (200m to 0m)
-void stateChuteRelease() {
-  if (pc_deployed == 'N') {
-    chuteRelease();
-    pc_deployed = 'C';
-  }
-  if ((altitude - last_alt) < 1) { // ADD ACCELERATION CONDITION AND CHANGE ALTITUDE PARAMETERS!!
-    flightState = "LANDED";
-  }
-}
-
-// landed
-void stateLanded() {
-  if (mast_raised == 'N') {
-    upright();
-    delay(5000);
-    flagDeploy();
-    delay (5000);
-    mast_raised = 'M'; 
-    buzzer(); //BUZZER ACTIVATES HERE
-  }
-}
-//////////////////////////////////////////////////////////////////////////// NEED HELP ////////////////////////////////////////////////////////////////////////////
 
 
 
@@ -443,11 +455,12 @@ void readcommands(){
       else if (cmd == "ACT"){
         if (cmdarg == "MR") {
           cmdecho = "ACTMR";
-          rocketRelease();
+          containerReleased = false;
+          containerRelease();
         }
         else if (cmdarg == "HS") {
           cmdecho = "ACTHS";
-          shieldDeployOne();
+          shieldDeploy();
         }
         else if (cmdarg == "PC") {
           cmdecho = "ACTPC";
@@ -483,23 +496,29 @@ void updateData() {
    */
 
   // BMP
-  temperature = round(10 * bmp.temperature)/10.0;
-  pressure = round(bmp.pressure / 100.0)/10.0;
-  last_alt = altitude;
-  altitude = round(10 * (bmp.readAltitude(SEALEVELPRESSURE_HPA) - alt_offset))/10.0;
+  if (bmpWorking) {
+    temperature = round(10 * bmp.temperature)/10.0;
+    pressure = round(bmp.pressure / 100.0)/10.0;
+    last_alt = altitude;
+    altitude = round(10 * (bmp.readAltitude(SEALEVELPRESSURE_HPA) - alt_offset))/10.0;
+  }
 
   // SAM
-  latitude = myGNSS.getLatitude()/10000000.0;
-  longitude = myGNSS.getLongitude()/10000000.0;
-  gps_altitude = myGNSS.getAltitude()/1000.0;
-  siv = myGNSS.getSIV();
-  gps_time = (String)myGNSS.getHour() + ":" + (String)myGNSS.getMinute() + ":" + (String)myGNSS.getSecond();
-
+//  if (samWorking) {
+//    latitude = myGNSS.getLatitude()/10000000.0;
+//    longitude = myGNSS.getLongitude()/10000000.0;
+//    gps_altitude = myGNSS.getAltitude()/1000.0;
+//    siv = myGNSS.getSIV();
+//    gps_time = (String)myGNSS.getHour() + ":" + (String)myGNSS.getMinute() + ":" + (String)myGNSS.getSecond();
+//  }
+  
   // BNO
-  sensors_event_t event;
-  bno.getEvent(&event);
-  tiltx = (float)event.orientation.x;
-  tilty = (float)event.orientation.y;  
+  if (bnoWorking) {
+    sensors_event_t event;
+    bno.getEvent(&event);
+    tiltx = -(float)event.orientation.y;
+    tilty = -(float)event.orientation.z;  
+  }
 
   // ADC Voltage
   //voltage = analogRead(A2)*(6.6/8192)*2;
@@ -512,8 +531,34 @@ void updateData() {
   int dminutes = int(floor(dtime / 60));
   dtime = dtime - dminutes * 60;
   int dseconds = dtime;
+
+  while ((startSecond + dseconds) >= 60){
+    dseconds -= 60;
+    dminutes++;
+  }
+  while ((startMinute + dminutes) >= 60){
+    dminutes -= 60;
+    dhours++;
+  }
+  while ((startHour + dhours) >= 24){
+    dhours -= 24;
+  }
+
+  String hourStr = String(startHour + dhours);
+  String minStr = String(startMinute + dminutes);
+  String secStr = String(startSecond + dseconds);
+
+  if (hourStr.length() == 1){
+    hourStr = "0" + hourStr;
+  }
+  if (minStr.length() == 1){
+    minStr = "0" + minStr;
+  }
+  if (secStr.length() == 1){
+    secStr = "0" + secStr;
+  }
   
-  String(startHour + dhours) + ":" + String(startMinute + dminutes) + ":" + String(startSecond + dseconds);
+  missionTime = hourStr + ":" + minStr + ":" + secStr;
   
 }
 
@@ -544,7 +589,7 @@ String packetGenerator(){
                   + (String)siv + "," 
                   + (String)tiltx + "," 
                   + (String)tilty + "," 
-                  + cmdecho;
+                  + cmdecho + '\n';
     Serial.println(packet);
     return packet;         
 }
@@ -552,44 +597,53 @@ String packetGenerator(){
 
 
 
-///////////////////////////////////// STATE LOOP /////////////////////////////////////
+///////////////////////////////////// FLIGHT STATE LOOP /////////////////////////////////////
 void loop() {
-packet_csv = SD.open("/testlaunchdata.csv", FILE_APPEND);
-  
-   if (flightState == "IDLE"){
-    ;
+ 
+  if (sdWorking){
+    packet_csv = SD.open("/testlaunchdata.csv", FILE_APPEND);
   }
-  else {
+  
+  if (flightState != "IDLE") {
     String packet = packetGenerator();
-    writeToFile(packet, packet_csv);
+    if (sdWorking){
+      writeToFile(packet, packet_csv);
+    }
+    Serial1.print(packet);
     debugPrintData();
     
-    if (flightState == "READY"){
-      stateReady();
+    if (flightState == "READY" && altitude >= 5){
+      flightState = "ASCENDING";
     }
-    else if (flightState == "ASCENDING"){
-      stateAscending();
+    else if (flightState == "ASCENDING" && altitude - last_alt < 0){
+      flightState = "DESCENDING";
     }
-    else if (flightState == "DESCENDING"){
-      stateDescending();
+    else if (flightState == "DESCENDING" && altitude <= 500){
+      containerRelease();
+      shieldDeploy();
     }
-    else if (flightState == "HSDEPLOYED"){
-      stateShieldRelease();
+    else if (flightState == "HSDEPLOYED" && shieldDeployed && altitude <= 200){
+      shieldRetract();
+      chuteRelease();
     }
-    else if (flightState == "PCDEPLOYED"){
-      stateChuteRelease();
+    else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1 && chuteReleased){
+      upright();
+      delay(3000);
+      flagDeploy();
     }
     else if (flightState == "LANDED"){
-      stateLanded();
+      buzzer();
     }
     else {
-      Serial.print("Case error.");
+      Serial.println("No action required for the cases.");
     }
   }
 
   readcommands();
   
-  packet_csv.close();
+  if (sdWorking){
+    packet_csv.close();
+  }
 
   ledBlink(); // make sure this stays at the end of the loop
 }
