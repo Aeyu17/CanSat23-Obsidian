@@ -26,6 +26,10 @@ func packetTransceiver(l *list.List) {
 		switch mode {
 		case "flight":
 			packet = backend.GetDataPacket(l)
+			if packet == "Empty" {
+				continue
+			}
+			
 			backend.WriteToCSV(packet, "flightlaunchdata.csv")
 
 		case "sim":
@@ -38,10 +42,16 @@ func packetTransceiver(l *list.List) {
 			backend.SendPacket(backend.PORT, backend.BAUD, simpPacket)
 
 			packet = backend.GetDataPacket(l)
+			if packet == "Empty" {
+				continue
+			}
 			backend.WriteToCSV(packet, "simlaunchdata.csv")
 
 		case "gen":
 			packet = backend.GetDataPacket(l)
+			if packet == "Empty" {
+				continue
+			}
 			backend.WriteToCSV(packet, "genlaunchdata.csv")
 
 		default:
@@ -49,9 +59,6 @@ func packetTransceiver(l *list.List) {
 		}
 
 		// TRANSMITTER
-		if packet == "Empty" {
-			continue
-		}
 		fmt.Println(packet)
 		for backend.ServerWriting {
 			time.Sleep(time.Second / 100)

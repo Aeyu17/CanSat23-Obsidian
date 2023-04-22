@@ -70,6 +70,9 @@ func GeneratePacket() (packet string) {
 
 	}
 	altitude = math.Round(altitude*10)/10
+	temperature = math.Round(temperature*100)/100
+	pressure = math.Round(pressure*100)/100
+	voltage = math.Round(voltage*100)/100
 
 	gpsTime := currentTime
 	gpsAlt := altitude
@@ -79,6 +82,11 @@ func GeneratePacket() (packet string) {
 	tiltx += 0.1 * rand.Float64() - 0.05
 	tilty += 0.1 * rand.Float64() - 0.05
 
-	packet = team_id + "," + currentTime + "," + strconv.Itoa(packetCount) + "," + mode + "," + state + "," + strconv.FormatFloat(altitude, 'f', -1, 64) + "," + hs_deployed + "," + pc_deployed + "," + mast_raised + "," + strconv.FormatFloat(temperature, 'f', -1, 64) + "," + strconv.FormatFloat(pressure, 'f', -1, 64) + "," + strconv.FormatFloat(voltage, 'f', -1, 64) + "," + gpsTime + "," + strconv.FormatFloat(gpsAlt, 'f', -1, 64) + "," + strconv.FormatFloat(gpsLat, 'f', -1, 64) + "," + strconv.FormatFloat(gpsLong, 'f', -1, 64) + "," + strconv.Itoa(gpsSats) + "," + strconv.FormatFloat(tiltx, 'f', -1, 64) + "," + strconv.FormatFloat(tilty, 'f', -1, 64) + "," + cmd_echo + "\n"
+	gpsLat = math.Round(gpsLat*10000)/10000
+	gpsLong = math.Round(gpsLong*10000)/10000
+	tiltx = math.Round(tiltx*100)/100
+	tilty = math.Round(tilty*100)/100
+
+	packet = team_id + "," + currentTime + "," + strconv.Itoa(packetCount) + "," + mode + "," + state + "," + strconv.FormatFloat(altitude, 'f', -1, 64) + "," + hs_deployed + "," + pc_deployed + "," + mast_raised + "," + strconv.FormatFloat(temperature, 'f', -1, 64) + "," + strconv.FormatFloat(voltage, 'f', -1, 64) + "," + strconv.FormatFloat(pressure, 'f', -1, 64) + "," + gpsTime + "," + strconv.FormatFloat(gpsAlt, 'f', -1, 64) + "," + strconv.FormatFloat(gpsLat, 'f', -1, 64) + "," + strconv.FormatFloat(gpsLong, 'f', -1, 64) + "," + strconv.Itoa(gpsSats) + "," + strconv.FormatFloat(tiltx, 'f', -1, 64) + "," + strconv.FormatFloat(tilty, 'f', -1, 64) + "," + cmd_echo + "\n"
 	return packet
 }

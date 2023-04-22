@@ -1,8 +1,104 @@
 window.onload = function () {
     var gcsSocket = new WebSocket("ws://localhost:8080/ws");
+ 
+    var startTime = "00:00:00";
+    var dataLength = 500; // number of dataPoints visible at any point
+
+    function updateData(packet) {
+        // count is number of times loop runs to generate random dataPoints.
+        let packetArr = packet.split(",");
+
+        if (startTime == "00:00:00") {
+            startTime = packetArr[1];
+        }
+
+        let startTimeArr = [];
+        let timeArr = [];
+        for (i = 0; i < 3; i++) {
+            startTimeArr.push(parseInt(startTime.split(":")[i]));
+            timeArr.push(parseInt(packetArr[1].split(":")[i]));
+        }
+        console.log(startTimeArr);
+        console.log(timeArr);
+
+        time = (timeArr[0] - startTimeArr[0])*3600 + (timeArr[1] - startTimeArr[1])*60 + (timeArr[2] - startTimeArr[2]);
+
+        console.log(time);
+
+        alts.push({
+            x: time,
+            y: parseFloat(packetArr[5])
+        });
+        temps.push({
+            x: time,
+            y: parseFloat(packetArr[9])
+        });
+        press.push({
+            x: time,
+            y: parseFloat(packetArr[11])
+        });
+        tilts.push({
+            x: parseFloat(packetArr[17]),
+            y: parseFloat(packetArr[18])
+        });
+        locs.push({
+            x: parseFloat(packetArr[15]),
+            y: parseFloat(packetArr[14])
+        });
+        volts.push({
+            x: time,
+            y: parseFloat(packetArr[10])
+        });
+        time++;
+        if (alts.length > dataLength) {
+            alts.shift();
+        }
+        if (temps.length > dataLength) {
+            temps.shift();
+        }
+        if (press.length > dataLength) {
+            press.shift();
+        }
+        if (tilts.length > dataLength) {
+            tilts.shift();
+        }
+        if (locs.length > dataLength) {
+            locs.shift();
+        }
+        if (volts.length > dataLength) {
+            volts.shift();
+        }
+        altChart.render();
+        tempChart.render();
+        presChart.render();
+        tiltChart.render();
+        locChart.render();
+        voltChart.render();
+
+        // update labels
+        document.getElementById("TimeLabel").textContent = "Time: " + packetArr[1];
+        document.getElementById("PacketCount").textContent = "Packet Count: " + packetArr[2];
+        document.getElementById("Mode").textContent = "Mode: " + packetArr[3];
+        document.getElementById("State").textContent = "State: " + packetArr[4];
+        document.getElementById("HSStatus").textContent = "Heat Shield Deployed: " + packetArr[6];
+        document.getElementById("PCStatus").textContent = "Parachute Deployed: " + packetArr[7];
+        document.getElementById("MastStatus").textContent = "Flag Raised: " + packetArr[8];
+        document.getElementById("VoltageLabel").textContent = "Voltage: " + packetArr[10] +"V";
+        document.getElementById("GPSTimeLabel").textContent = "GPS Time: " + packetArr[12];
+        document.getElementById("GPSAltitude").textContent = "GPS Altitude: " + packetArr[13] + "m";
+        document.getElementById("GPSSats").textContent = "SIV: " + packetArr[16];
+        document.getElementById("CMDEcho").textContent = "Command Echo: " + packetArr[19];
+
+    }
 
     gcsSocket.onmessage = function (event) {
-        console.log(event.data)
+        console.log(event.data);
+
+        if (event.data == "1070,PING") {
+            console.log("Pong!");
+        } else {
+            updateData(event.data);
+        }
     };
 
     var testBtn = document.getElementById("testBtn");
@@ -161,88 +257,4 @@ window.onload = function () {
             dataPoints: volts
         }]
     })
-    
-    var time = 0;
-    var alt = 0;
-    var temp = 30;
-    var pres = 1000;
-    var tiltx = 0;
-    var tilty = 0;
-    var locx = 0;
-    var locy = 0
-    var volt = 6;
-    var updateInterval = 1000;
-    var dataLength = 50; // number of dataPoints visible at any point
-    
-    var updateChart = function (count, packet) {
-        count = count || 1;
-        // count is number of times loop runs to generate random dataPoints.
-        for (var j = 0; j < count; j++) {	
-            alt += -5 * Math.random() + 5;
-            temp += Math.random() - 0.5;
-            pres += Math.random() - 0.5;
-            tiltx += 2 * Math.random() - 1;
-            tilty += 2 * Math.random() - 1;
-            locx += 2 * Math.random() - 1;
-            locy += 2 * Math.random() - 1;
-            volt = 5.75 + 0.5 * Math.random();
-
-            alts.push({
-                x: time,
-                y: alt
-            });
-            temps.push({
-                x: time,
-                y: temp
-            });
-            press.push({
-                x: time,
-                y: pres
-            });
-            tilts.push({
-                x: tiltx,
-                y: tilty
-            });
-            locs.push({
-                x: locx,
-                y: locy
-            });
-            volts.push({
-                x: time,
-                y: volt
-            });
-            time++;
-        }
-        if (alts.length > dataLength) {
-            alts.shift();
-        }
-        if (temps.length > dataLength) {
-            temps.shift();
-        }
-        if (press.length > dataLength) {
-            press.shift();
-        }
-        if (tilts.length > dataLength) {
-            tilts.shift();
-        }
-        if (locs.length > dataLength) {
-            locs.shift();
-        }
-        if (volts.length > dataLength) {
-            volts.shift();
-        }
-        altChart.render();
-        tempChart.render();
-        presChart.render();
-        tiltChart.render();
-        locChart.render();
-        voltChart.render();
-
-        // update labels
-        document.getElementById("TimeLabel").textContent = "Time: " + time + " s";
-        document.getElementById("VoltageLabel").textContent = "Voltage: " + Math.round(100 * volt) / 100 + "V";
-
-    }; 
-    setInterval(function(){ updateChart() }, updateInterval); 
-    
 }
