@@ -29,7 +29,7 @@ func packetTransceiver(l *list.List) {
 			if packet == "Empty" {
 				continue
 			}
-			
+
 			backend.WriteToCSV(packet, "flightlaunchdata.csv")
 
 		case "sim":
@@ -64,7 +64,6 @@ func packetTransceiver(l *list.List) {
 			time.Sleep(time.Second / 100)
 		}
 		backend.ServerWrite(packet)
-		time.Sleep(time.Second / 2)
 	}
 }
 
