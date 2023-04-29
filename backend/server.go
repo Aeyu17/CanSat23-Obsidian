@@ -47,71 +47,92 @@ func reader(conn *websocket.Conn) {
 			fmt.Println("CXON CALLED")
 			Mode = "flight"
 			fmt.Println("Flight mode enabled.")
-			SendPacket(PORT, BAUD, "CMD,1070,CX,ON")
+			SendPacket("CMD,1070,CX,ON\n")
 
 		case "CXOFF":
 			fmt.Println("CXOFF CALLED")
 			Mode = "none"
 			fmt.Println("No mode enabled.")
-			SendPacket(PORT, BAUD, "CMD,1070,CX,OFF")
+			SendPacket("CMD,1070,CX,OFF\n")
 
 		case "STGPS":
 			fmt.Println("STGPS CALLED")
-			SendPacket(PORT, BAUD, "CMD,1070,ST,GPS")
+			SendPacket("CMD,1070,ST,GPS\n")
 
 		case "SIME":
 			fmt.Println("SIME CALLED")
 			Mode = "sim"
 			fmt.Println("Simulation mode enabled.")
-			SendPacket(PORT, BAUD, "CMD,1070,SIM,ENABLE")
+			SendPacket("CMD,1070,SIM,ENABLE\n")
 
 		case "SIMD":
 			fmt.Println("SIMD CALLED")
 			Mode = "none"
 			SimActive = false
 			fmt.Println("No mode enabled.")
-			SendPacket(PORT, BAUD, "CMD,1070,SIM,DISABLE")
+			SendPacket("CMD,1070,SIM,DISABLE\n")
 
 		case "SIMA":
 			fmt.Println("SIMA CALLED")
 			SimActive = true
 			fmt.Println("Simulation mode activated.")
-			SendPacket(PORT, BAUD, "CMD,1070,SIM,ACTIVATE")
+			SendPacket("CMD,1070,SIM,ACTIVATE\n")
 
 		case "CAL":
 			fmt.Println("CAL CALLED")
-			SendPacket(PORT, BAUD, "CMD,1070,CAL")
+			SendPacket("CMD,1070,CAL\n")
 
 		case "ACTMR":
 			fmt.Println("ACTMR CALLED")
-			SendPacket(PORT, BAUD, "CMD,1070,ACT,MR")
+			SendPacket("CMD,1070,ACT,MR\n")
 			
 		case "ACTHS":
 			fmt.Println("ACTHS CALLED")
-			SendPacket(PORT, BAUD, "CMD,1070,ACT,HS")
+			SendPacket("CMD,1070,ACT,HS\n")
 
 		case "ACTPC":
 			fmt.Println("ACTPC CALLED")
-			SendPacket(PORT, BAUD, "CMD,1070,ACT,PC")
+			SendPacket("CMD,1070,ACT,PC\n")
 
 		case "ACTAB":
 			fmt.Println("ACTAB CALLED")
-			SendPacket(PORT, BAUD, "CMD,1070,ACT,AB")
+			SendPacket("CMD,1070,ACT,AB\n")
 
 		case "ACTLED":
 			fmt.Println("ACTLED CALLED")
-			SendPacket(PORT, BAUD, "CMD,1070,ACT,LED")
+			SendPacket("CMD,1070,ACT,LED\n")
 
 		case "PING":
 			fmt.Println("PING CALLED")
 			start := time.Now()
 
-			SendPacket(PORT, BAUD, "CMD,1070,PING")
-			GetPingPacket(PacketList)
+			SendPacket("CMD,1070,PING\n")
+			timeOut := make(chan time.Time)
+			pingChannel := make(chan string, 1)
+			flag := true
+			go func() {
+				pingChannel <- GetPingPacket(PacketList)
+			}()
+			go func() {
+				// goofy ahh
+				t := <- time.After(3 * time.Second)
+				timeOut <- t
+			}()
+			for flag {
+				select {
+				case <- timeOut:
+					fmt.Println("Ping timed out. Please check connection.")
+					flag = false
+				case p := <- pingChannel:
+					if p != "Empty" {
+						duration := time.Since(start)
+						fmt.Println("Pong! " + strconv.FormatInt(duration.Milliseconds(), 5))
+						flag = false
+					}
+				}
+			}
 
-			duration := time.Since(start)
-			fmt.Println("Pong! " + strconv.FormatInt(duration.Milliseconds(), 5))
-
+	
 		case "RESET":
 			fmt.Println("RESET CALLED")
 
@@ -122,6 +143,7 @@ func reader(conn *websocket.Conn) {
 		default:
 			if string(p)[0:2] == "ST" {
 				fmt.Println("STCUS ACTIVATED")
+				SendPacket("CMD,1070,ST," + string(p)[2:] + "\n")
 			} else {
 				fmt.Println("OTHER MESSAGE RECEIVED")
 			}

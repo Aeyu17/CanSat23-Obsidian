@@ -40,7 +40,7 @@ func packetTransceiver(l *list.List) {
 				backend.Mode = "none"
 				continue
 			}
-			backend.SendPacket(backend.PORT, backend.BAUD, simpPacket)
+			backend.SendPacket(simpPacket)
 
 			packet = backend.GetDataPacket(l)
 			if packet == "Empty" {
@@ -70,6 +70,8 @@ func packetTransceiver(l *list.List) {
 }
 
 func main() {
+	defer backend.SerialPort.Close()
+
 	var packetChannel = make(chan string, 100)
 
 	go backend.PacketReceiver(packetChannel)

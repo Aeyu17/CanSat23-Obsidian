@@ -12,7 +12,7 @@ func PacketReceiver(c chan string) {
 	for {
 		var packet string;
 		if Mode == "flight" || Mode == "sim" {
-			packet = ReceivePacket(PORT, BAUD)
+			packet = ReceivePacket()
 			if strings.Split(packet, ",")[0] == "1070" {
 				c <- packet
 			}

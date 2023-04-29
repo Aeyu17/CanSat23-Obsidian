@@ -7,21 +7,24 @@ import (
 	"github.com/tarm/serial"
 )
 
-const PORT = "COM7"
+const PORT = "COM6"
 const BAUD = 9600
+var SerialPort = InitPort(PORT, BAUD)
 
-func ReceivePacket(port string, baud int) (data string) {
+func InitPort(port string, baud int) (SerialPort *serial.Port) {
 	c := &serial.Config{Name: port, Baud: baud}
-	s, err := serial.OpenPort(c)
+	SerialPort, err := serial.OpenPort(c)
 	if err != nil {
-		log.Println("wahoo")
-		log.Println(err)
-		return
+		log.Fatal(err)
 	}
+	return
+}
 
+func ReceivePacket() (data string) {
 	buf := make([]byte, 128)
 	for {
-		n, err := s.Read(buf)
+		n, err := SerialPort.Read(buf)
+		log.Println("hhhh")
 		if err != nil {
 			log.Println(err)
 			return
@@ -32,21 +35,13 @@ func ReceivePacket(port string, baud int) (data string) {
 			break
 		}
 	}
-	s.Close()
 	return
 }
 
-func SendPacket(port string, baud int, data string) {
-	c := &serial.Config{Name: port, Baud: baud}
-	s, err := serial.OpenPort(c)
+func SendPacket(data string) {
+	_, err := SerialPort.Write([]byte(data))
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	_, err = s.Write([]byte(data))
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	s.Close()
 }
