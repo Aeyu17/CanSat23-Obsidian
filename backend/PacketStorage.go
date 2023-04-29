@@ -4,17 +4,21 @@ import (
 	"container/list"
 	"strings"
 	"time"
+	"fmt"
 )
 
 var PacketList *list.List = new(list.List)
 
 func PacketReceiver(c chan string) {
+	go ReceivePacket()
 	for {
 		var packet string;
 		if Mode == "flight" || Mode == "sim" {
-			packet = ReceivePacket()
+			packet = <- PacketReceiverChannel
+			fmt.Println("Wahoo!")
 			if strings.Split(packet, ",")[0] == "1070" {
 				c <- packet
+				fmt.Println("Packet Received")
 			}
 		} else if Mode == "gen" {
 			time.Sleep(time.Second)
@@ -30,6 +34,7 @@ func PacketEnqueuer(c chan string, l *list.List) {
 	for {
 		packet := <- c
 		l.PushBack(packet)
+		fmt.Println("Packet queued.")
 	}
 }
 
@@ -41,7 +46,7 @@ func GetDataPacket(l *list.List) (packet string) {
 	for item := l.Front(); item != nil; item = item.Next() {
 		packet = item.Value.(string)
 		packetArr := strings.Split(packet, ",")
-		if len(packetArr) > 2 {
+		if len(packetArr) == 20 {
 			l.Remove(item)
 			return
 		}

@@ -2,14 +2,16 @@ package backend
 
 import (
 	"log"
-	"strings"
+	"fmt"
+	"bufio"
 
 	"github.com/tarm/serial"
 )
 
-const PORT = "COM6"
+const PORT = "COM7"
 const BAUD = 9600
 var SerialPort = InitPort(PORT, BAUD)
+var PacketReceiverChannel = make(chan string, 100)
 
 func InitPort(port string, baud int) (SerialPort *serial.Port) {
 	c := &serial.Config{Name: port, Baud: baud}
@@ -20,22 +22,17 @@ func InitPort(port string, baud int) (SerialPort *serial.Port) {
 	return
 }
 
-func ReceivePacket() (data string) {
-	buf := make([]byte, 128)
-	for {
-		n, err := SerialPort.Read(buf)
-		log.Println("hhhh")
-		if err != nil {
-			log.Println(err)
-			return
+func ReceivePacket() {
+	fmt.Println("FWJAF")
+	scanner := bufio.NewScanner(SerialPort)
+	for scanner.Scan() {
+		data := scanner.Text()
+		if err := scanner.Err(); err != nil {
+			log.Fatal(err)
 		}
-		// If we receive a newline stop reading
-		if strings.Contains(string(buf[:n]), "\n") {
-			data = string(buf[:n])
-			break
-		}
+		fmt.Println(data)
+		PacketReceiverChannel <- data
 	}
-	return
 }
 
 func SendPacket(data string) {

@@ -231,6 +231,12 @@ window.onload = function () {
         e.preventDefault();
     });
 
+    let genBtn = document.getElementById("genBtn");
+    genBtn.addEventListener("click", function (e){
+        gcsSocket.send("GEN");
+        e.preventDefault();
+    });
+
     let altChart = new CanvasJS.Chart("altitude", {
         title :{
             text: "Altitude (m)",
