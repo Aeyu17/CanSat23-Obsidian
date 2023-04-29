@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"time"
 	"strconv"
-	"os"
-	"io"
 
 	"github.com/gorilla/websocket"
 )
@@ -22,7 +20,7 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin:		func (r *http.Request) bool {return true},
 }
 
-var Mode = "gen";
+var Mode = "none";
 var SimActive bool;
 var wsChan = make(chan *websocket.Conn)
 var wsActive bool;
@@ -48,11 +46,13 @@ func reader(conn *websocket.Conn) {
 		case "CXON":
 			fmt.Println("CXON CALLED")
 			Mode = "flight"
+			fmt.Println("Flight mode enabled.")
 			SendPacket(PORT, BAUD, "CMD,1070,CX,ON")
 
 		case "CXOFF":
 			fmt.Println("CXOFF CALLED")
 			Mode = "none"
+			fmt.Println("No mode enabled.")
 			SendPacket(PORT, BAUD, "CMD,1070,CX,OFF")
 
 		case "STGPS":
@@ -62,17 +62,20 @@ func reader(conn *websocket.Conn) {
 		case "SIME":
 			fmt.Println("SIME CALLED")
 			Mode = "sim"
+			fmt.Println("Simulation mode enabled.")
 			SendPacket(PORT, BAUD, "CMD,1070,SIM,ENABLE")
 
 		case "SIMD":
 			fmt.Println("SIMD CALLED")
-			Mode = "flight"
+			Mode = "none"
 			SimActive = false
+			fmt.Println("No mode enabled.")
 			SendPacket(PORT, BAUD, "CMD,1070,SIM,DISABLE")
 
 		case "SIMA":
 			fmt.Println("SIMA CALLED")
 			SimActive = true
+			fmt.Println("Simulation mode activated.")
 			SendPacket(PORT, BAUD, "CMD,1070,SIM,ACTIVATE")
 
 		case "CAL":
@@ -114,6 +117,7 @@ func reader(conn *websocket.Conn) {
 
 		case "GEN":
 			Mode = "gen"
+			fmt.Println("Generator mode enabled.")
 
 		default:
 			if string(p)[0:2] == "ST" {
@@ -122,7 +126,7 @@ func reader(conn *websocket.Conn) {
 				fmt.Println("OTHER MESSAGE RECEIVED")
 			}
 		}
-
+		
 		if err := conn.WriteMessage(messageType, p); err != nil {
 			log.Println(err)
 			return
@@ -154,32 +158,11 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 	log.Println("Page was closed.")
 }
 
-
-func BuildFile() {
-	resp, err := http.Get("https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css")
-    if err != nil {
-        panic(err)
-    }
-    defer resp.Body.Close()
-
-    out, err := os.Create("./bootstrap.min.css")
-    if err != nil {
-        panic(err)
-    }
-    defer out.Close()
-
-    _, err = io.Copy(out, resp.Body)
-    if err != nil {
-        panic(err)
-    }
-}
-
 func InitServer() {
 	staticContent, err := fs.Sub(staticFiles, "static")
 	if err != nil {
 		panic(err)
 	}
-	// BuildFile()
 
 	fileServer := http.FileServer(http.FS(staticContent))
 	http.Handle("/", fileServer)

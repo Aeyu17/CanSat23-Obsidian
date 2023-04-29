@@ -4,11 +4,11 @@ import (
 	"container/list"
 	"fmt"
 	"sync"
+	"time"
 
 	backend "github.com/Aeyu17/CanSat23-Obsidian/backend"
 )
 
-var mode = backend.Mode
 var mu sync.Mutex;
 
 // can be flight, sim, and gen
@@ -20,24 +20,24 @@ none - no mode active
 */
 
 func packetTransceiver(l *list.List) {
-	fmt.Println("Running in " + mode + " mode.")
+	fmt.Println("Running in " + backend.Mode + " mode.")
 	for {
 		// RECEIVER
 		var packet string
-		switch mode {
+		switch backend.Mode {
 		case "flight":
+			
 			packet = backend.GetDataPacket(l)
 			if packet == "Empty" {
 				continue
 			}
-
 			backend.WriteToCSV(packet, "flightlaunchdata.csv")
 
 		case "sim":
 			simpPacket := backend.ReadPressureCSV("cansat_2023_simp.csv")
 			if len(simpPacket) == 0 {
 				fmt.Println("Simulation complete.")
-				mode = "flight"
+				backend.Mode = "none"
 				continue
 			}
 			backend.SendPacket(backend.PORT, backend.BAUD, simpPacket)
@@ -55,6 +55,10 @@ func packetTransceiver(l *list.List) {
 			}
 			backend.WriteToCSV(packet, "genlaunchdata.csv")
 
+		default:
+			fmt.Println("No mode enabled.")
+			time.Sleep(time.Second)
+			continue
 		}
 
 		// TRANSMITTER

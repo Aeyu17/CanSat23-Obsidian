@@ -18,6 +18,8 @@ let cmdEcho = "NONE";
 
 let startTime = "00:00:00";
 
+let fontFamily = "Helvetica";
+
 window.onload = function () {
     let gcsSocket = new WebSocket("ws://localhost:8080/ws");
  
@@ -231,7 +233,8 @@ window.onload = function () {
 
     let altChart = new CanvasJS.Chart("altitude", {
         title :{
-            text: "Altitude (m)"
+            text: "Altitude (m)",
+            fontFamily
         },
         data: [{
             type: "spline",
@@ -241,7 +244,8 @@ window.onload = function () {
     });
     let tempChart = new CanvasJS.Chart("temperature", {
         title :{
-            text: "Temperature (°C)"
+            text: "Temperature (°C)",
+            fontFamily
         },
         data: [{
             type: "spline",
@@ -251,7 +255,8 @@ window.onload = function () {
     })
     let presChart = new CanvasJS.Chart("pressure", {
         title :{
-            text: "pressure (kPa)"
+            text: "Pressure (kPa)",
+            fontFamily
         },
         data: [{
             type: "spline",
@@ -261,7 +266,8 @@ window.onload = function () {
     })
     let tiltChart = new CanvasJS.Chart("tilt", {
         title :{
-            text: "Tilt (°)"
+            text: "Tilt (°)",
+            fontFamily
         },
         data: [{
             type: "spline",
@@ -271,7 +277,8 @@ window.onload = function () {
     })
     let locChart = new CanvasJS.Chart("location", {
         title :{
-            text: "Location (°)"
+            text: "Location (°)",
+            fontFamily
         },
         data: [{
             type: "spline",
@@ -281,7 +288,8 @@ window.onload = function () {
     })
     let voltChart = new CanvasJS.Chart("voltage", {
         title :{
-            text: "Voltage (V)"
+            text: "Voltage (V)",
+            fontFamily
         },
         data: [{
             type: "spline",
