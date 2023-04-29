@@ -7,7 +7,7 @@ import (
 	"github.com/tarm/serial"
 )
 
-const PORT = "COM6"
+const PORT = "COM7"
 const BAUD = 9600
 
 func ReceivePacket(port string, baud int) (data string) {
