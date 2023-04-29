@@ -10,7 +10,6 @@ var PacketList *list.List = new(list.List)
 
 func PacketReceiver(c chan string) {
 	for {
-		time.Sleep(time.Second)
 		var packet string;
 		if Mode == "flight" || Mode == "sim" {
 			packet = ReceivePacket(PORT, BAUD)
@@ -18,6 +17,7 @@ func PacketReceiver(c chan string) {
 				c <- packet
 			}
 		} else if Mode == "gen" {
+			time.Sleep(time.Second)
 			packet = GeneratePacket()
 			c <- packet
 		} else {

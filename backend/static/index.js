@@ -1,27 +1,27 @@
-var missionTime = "00:00:00";
-var packetCount = -1;
-var mode = "F";
-var state = "IDLE";
-var altitudeArr = [];
-var hsDeployed = "N";
-var pcDeployed = "N";
-var mastRaised = "N";
-var temperatureArr = [];
-var pressureArr = [];
-var voltageArr = [];
-var gpsTime = "00:00:00";
-var gpsAltitude = 0.0;
-var locationArr = [];
-var gpsSatellites = -1;
-var tiltArr = [];
-var cmdEcho = "NONE";
+let missionTime = "00:00:00";
+let packetCount = -1;
+let mode = "F";
+let state = "IDLE";
+let altitudeArr = [];
+let hsDeployed = "N";
+let pcDeployed = "N";
+let mastRaised = "N";
+let temperatureArr = [];
+let pressureArr = [];
+let voltageArr = [];
+let gpsTime = "00:00:00";
+let gpsAltitude = 0.0;
+let locationArr = [];
+let gpsSatellites = -1;
+let tiltArr = [];
+let cmdEcho = "NONE";
 
-var startTime = "00:00:00";
+let startTime = "00:00:00";
 
 window.onload = function () {
-    var gcsSocket = new WebSocket("ws://localhost:8080/ws");
+    let gcsSocket = new WebSocket("ws://localhost:8080/ws");
  
-    var dataLength = 500; // number of dataPoints visible at any point
+    let dataLength = 500; // number of dataPoints visible at any point
 
     function updateData(packet) {
         // count is number of times loop runs to generate random dataPoints.
@@ -47,19 +47,14 @@ window.onload = function () {
         let tilty = parseFloat(packetArr[18]);
         cmdEcho = packetArr[19];
 
-        if (startTime == "00:00:00" && typeof(missionTime) == typeof(" ")) {
+        if (startTime == "00:00:00" && typeof(missionTime) == typeof("")) {
             startTime = missionTime;
         }
 
         let startTimeArr = [];
         let timeArr = [];
 
-        console.log(startTime);
-        console.log(typeof(startTime));
-        console.log(startTime.split(":"));
-
         startTime.split(":").forEach(function (e){
-            console.log(e);
             startTimeArr.push(parseInt(e));
         });
 
@@ -67,12 +62,7 @@ window.onload = function () {
             timeArr.push(parseInt(e));
         });
 
-        console.log(startTimeArr);
-        console.log(timeArr);
-
         time = (timeArr[0] - startTimeArr[0])*3600 + (timeArr[1] - startTimeArr[1])*60 + (timeArr[2] - startTimeArr[2]);
-
-        console.log(time);
 
         altitudeArr.push({
             x: time,
@@ -98,8 +88,6 @@ window.onload = function () {
             x: time,
             y: volt
         });
-
-        console.log(pressureArr);
 
         if (altitudeArr.length > dataLength) {
             altitudeArr.shift();
@@ -152,13 +140,13 @@ window.onload = function () {
         }
     };
 
-    var testBtn = document.getElementById("testBtn");
+    let testBtn = document.getElementById("testBtn");
     testBtn.addEventListener("click", function (e) {
         gcsSocket.send("Test Button Clicked");
         e.preventDefault();
     });
 
-    var telemToggle = document.getElementById("telemetryToggle");
+    let telemToggle = document.getElementById("telemetryToggle");
     telemToggle.addEventListener("change", function (e){
         if (telemToggle.checked){
             gcsSocket.send("CXON");
@@ -168,13 +156,13 @@ window.onload = function () {
         e.preventDefault();
     });
 
-    var setgpsTimeBtn = document.getElementById("setGPSTimeBtn");
+    let setgpsTimeBtn = document.getElementById("setGPSTimeBtn");
     setgpsTimeBtn.addEventListener("click", function (e){
         gcsSocket.send("STGPS");
         e.preventDefault();
     });
 
-    var setCurTimeBtn = document.getElementById("setCurTimeBtn");
+    let setCurTimeBtn = document.getElementById("setCurTimeBtn");
     setCurTimeBtn.addEventListener("click", function(e){
         const d = new Date();
         let hour = d.getUTCHours().toString();
@@ -193,55 +181,55 @@ window.onload = function () {
         e.preventDefault();
     });
 
-    var calBtn = document.getElementById("calBtn");
+    let calBtn = document.getElementById("calBtn");
     calBtn.addEventListener("click", function (e){
         gcsSocket.send("CAL");
         e.preventDefault();
     });
 
-    var mrBtn = document.getElementById("mrBtn");
+    let mrBtn = document.getElementById("mrBtn");
     mrBtn.addEventListener("click", function (e){
         gcsSocket.send("ACTMR");
         e.preventDefault();
     });
 
-    var hsBtn = document.getElementById("hsBtn");
+    let hsBtn = document.getElementById("hsBtn");
     hsBtn.addEventListener("click", function (e){
         gcsSocket.send("ACTHS");
         e.preventDefault();
     });
 
-    var pcBtn = document.getElementById("pcBtn");
+    let pcBtn = document.getElementById("pcBtn");
     pcBtn.addEventListener("click", function (e){
         gcsSocket.send("ACTPC");
         e.preventDefault();
     });
 
-    var audioToggle = document.getElementById("audioToggle");
+    let audioToggle = document.getElementById("audioToggle");
     audioToggle.addEventListener("change", function (e){
         gcsSocket.send("ACTAB");
         e.preventDefault();
     });
 
-    var ledToggle = document.getElementById("ledToggle");
+    let ledToggle = document.getElementById("ledToggle");
     ledToggle.addEventListener("change", function (e){
         gcsSocket.send("ACTLED");
         e.preventDefault();
     });
 
-    var pingBtn = document.getElementById("pingBtn");
+    let pingBtn = document.getElementById("pingBtn");
     pingBtn.addEventListener("click", function (e){
         gcsSocket.send("PING");
         e.preventDefault();
     });
 
-    var resetBtn = document.getElementById("resetBtn");
+    let resetBtn = document.getElementById("resetBtn");
     resetBtn.addEventListener("click", function (e){
         gcsSocket.send("RESET");
         e.preventDefault();
     });
 
-    var altChart = new CanvasJS.Chart("altitude", {
+    let altChart = new CanvasJS.Chart("altitude", {
         title :{
             text: "Altitude (m)"
         },
@@ -251,7 +239,7 @@ window.onload = function () {
             dataPoints: altitudeArr 
         }]
     });
-    var tempChart = new CanvasJS.Chart("temperature", {
+    let tempChart = new CanvasJS.Chart("temperature", {
         title :{
             text: "Temperature (°C)"
         },
@@ -261,7 +249,7 @@ window.onload = function () {
             dataPoints: temperatureArr
         }]
     })
-    var presChart = new CanvasJS.Chart("pressure", {
+    let presChart = new CanvasJS.Chart("pressure", {
         title :{
             text: "pressure (kPa)"
         },
@@ -271,7 +259,7 @@ window.onload = function () {
             dataPoints: pressureArr
         }]
     })
-    var tiltChart = new CanvasJS.Chart("tilt", {
+    let tiltChart = new CanvasJS.Chart("tilt", {
         title :{
             text: "Tilt (°)"
         },
@@ -281,7 +269,7 @@ window.onload = function () {
             dataPoints: tiltArr
         }]
     })
-    var locChart = new CanvasJS.Chart("location", {
+    let locChart = new CanvasJS.Chart("location", {
         title :{
             text: "Location (°)"
         },
@@ -291,7 +279,7 @@ window.onload = function () {
             dataPoints: locationArr
         }]
     })
-    var voltChart = new CanvasJS.Chart("voltage", {
+    let voltChart = new CanvasJS.Chart("voltage", {
         title :{
             text: "Voltage (V)"
         },

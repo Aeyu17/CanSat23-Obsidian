@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 	"strconv"
+	"os"
+	"io"
 
 	"github.com/gorilla/websocket"
 )
@@ -24,15 +26,12 @@ var Mode = "gen";
 var SimActive bool;
 var wsChan = make(chan *websocket.Conn)
 var wsActive bool;
-var ServerWriting = false
 
 func ServerWrite(message string) {
 	ws := <- wsChan
-	ServerWriting = true
 	if err := ws.WriteMessage(1, []byte(message)); err != nil {
 		log.Println(err)
 	}
-	ServerWriting = false
 }
 
 func reader(conn *websocket.Conn) {
@@ -144,7 +143,7 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Println("Client connected.")
-	err = ws.WriteMessage(1, []byte("Hi Client!"))
+	// err = ws.WriteMessage(1, []byte("Hi Client!"))
 	if err != nil {
 		log.Println(err)
 	}
@@ -155,11 +154,32 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 	log.Println("Page was closed.")
 }
 
+
+func BuildFile() {
+	resp, err := http.Get("https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css")
+    if err != nil {
+        panic(err)
+    }
+    defer resp.Body.Close()
+
+    out, err := os.Create("./bootstrap.min.css")
+    if err != nil {
+        panic(err)
+    }
+    defer out.Close()
+
+    _, err = io.Copy(out, resp.Body)
+    if err != nil {
+        panic(err)
+    }
+}
+
 func InitServer() {
 	staticContent, err := fs.Sub(staticFiles, "static")
 	if err != nil {
 		panic(err)
 	}
+	// BuildFile()
 
 	fileServer := http.FileServer(http.FS(staticContent))
 	http.Handle("/", fileServer)
