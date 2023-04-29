@@ -87,6 +87,6 @@ func GeneratePacket() (packet string) {
 	tiltx = math.Round(tiltx*100)/100
 	tilty = math.Round(tilty*100)/100
 
-	packet = team_id + "," + currentTime + "," + strconv.Itoa(packetCount) + "," + mode + "," + state + "," + strconv.FormatFloat(altitude, 'f', -1, 64) + "," + hs_deployed + "," + pc_deployed + "," + mast_raised + "," + strconv.FormatFloat(temperature, 'f', -1, 64) + "," + strconv.FormatFloat(voltage, 'f', -1, 64) + "," + strconv.FormatFloat(pressure, 'f', -1, 64) + "," + gpsTime + "," + strconv.FormatFloat(gpsAlt, 'f', -1, 64) + "," + strconv.FormatFloat(gpsLat, 'f', -1, 64) + "," + strconv.FormatFloat(gpsLong, 'f', -1, 64) + "," + strconv.Itoa(gpsSats) + "," + strconv.FormatFloat(tiltx, 'f', -1, 64) + "," + strconv.FormatFloat(tilty, 'f', -1, 64) + "," + cmd_echo + "\n"
+	packet = team_id + "," + currentTime + "," + strconv.Itoa(packetCount) + "," + mode + "," + state + "," + strconv.FormatFloat(altitude, 'f', -1, 64) + "," + hs_deployed + "," + pc_deployed + "," + mast_raised + "," + strconv.FormatFloat(temperature, 'f', -1, 64) + "," + strconv.FormatFloat(pressure, 'f', -1, 64) + "," + strconv.FormatFloat(voltage, 'f', -1, 64) + "," + gpsTime + "," + strconv.FormatFloat(gpsAlt, 'f', -1, 64) + "," + strconv.FormatFloat(gpsLat, 'f', -1, 64) + "," + strconv.FormatFloat(gpsLong, 'f', -1, 64) + "," + strconv.Itoa(gpsSats) + "," + strconv.FormatFloat(tiltx, 'f', -1, 64) + "," + strconv.FormatFloat(tilty, 'f', -1, 64) + "," + cmd_echo + "\n"
 	return packet
 }

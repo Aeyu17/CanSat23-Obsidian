@@ -1,23 +1,72 @@
+var missionTime = "00:00:00";
+var packetCount = -1;
+var mode = "F";
+var state = "IDLE";
+var altitudeArr = [];
+var hsDeployed = "N";
+var pcDeployed = "N";
+var mastRaised = "N";
+var temperatureArr = [];
+var pressureArr = [];
+var voltageArr = [];
+var gpsTime = "00:00:00";
+var gpsAltitude = 0.0;
+var locationArr = [];
+var gpsSatellites = -1;
+var tiltArr = [];
+var cmdEcho = "NONE";
+
+var startTime = "00:00:00";
+
 window.onload = function () {
     var gcsSocket = new WebSocket("ws://localhost:8080/ws");
  
-    var startTime = "00:00:00";
     var dataLength = 500; // number of dataPoints visible at any point
 
     function updateData(packet) {
         // count is number of times loop runs to generate random dataPoints.
         let packetArr = packet.split(",");
 
-        if (startTime == "00:00:00") {
-            startTime = packetArr[1];
+        missionTime = packetArr[1];
+        packetCount = parseInt(packetArr[2]);
+        mode = packetArr[3];
+        state = packetArr[4];
+        let alt = parseFloat(packetArr[5]);
+        hsDeployed = packetArr[6];
+        pcDeployed = packetArr[7];
+        mastRaised = packetArr[8];
+        let temp = parseFloat(packetArr[9]);
+        let pressure = parseFloat(packetArr[10]);
+        let volt = parseFloat(packetArr[11]);
+        gpsTime = packetArr[12];
+        gpsAltitude = parseFloat(packetArr[13]);
+        let lat = parseFloat(packetArr[14]);
+        let long = parseFloat(packetArr[15]);
+        gpsSatellites = parseInt(packetArr[16]);
+        let tiltx = parseFloat(packetArr[17]);
+        let tilty = parseFloat(packetArr[18]);
+        cmdEcho = packetArr[19];
+
+        if (startTime == "00:00:00" && typeof(missionTime) == typeof(" ")) {
+            startTime = missionTime;
         }
 
         let startTimeArr = [];
         let timeArr = [];
-        for (i = 0; i < 3; i++) {
-            startTimeArr.push(parseInt(startTime.split(":")[i]));
-            timeArr.push(parseInt(packetArr[1].split(":")[i]));
-        }
+
+        console.log(startTime);
+        console.log(typeof(startTime));
+        console.log(startTime.split(":"));
+
+        startTime.split(":").forEach(function (e){
+            console.log(e);
+            startTimeArr.push(parseInt(e));
+        });
+
+        missionTime.split(":").forEach(function (e){
+            timeArr.push(parseInt(e));
+        });
+
         console.log(startTimeArr);
         console.log(timeArr);
 
@@ -25,48 +74,50 @@ window.onload = function () {
 
         console.log(time);
 
-        alts.push({
+        altitudeArr.push({
             x: time,
-            y: parseFloat(packetArr[5])
+            y: alt
         });
-        temps.push({
+        temperatureArr.push({
             x: time,
-            y: parseFloat(packetArr[9])
+            y: temp
         });
-        press.push({
+        pressureArr.push({
             x: time,
-            y: parseFloat(packetArr[11])
+            y: pressure
         });
-        tilts.push({
-            x: parseFloat(packetArr[17]),
-            y: parseFloat(packetArr[18])
+        tiltArr.push({
+            x: tiltx,
+            y: tilty
         });
-        locs.push({
-            x: parseFloat(packetArr[15]),
-            y: parseFloat(packetArr[14])
+        locationArr.push({
+            x: long,
+            y: lat
         });
-        volts.push({
+        voltageArr.push({
             x: time,
-            y: parseFloat(packetArr[10])
+            y: volt
         });
-        time++;
-        if (alts.length > dataLength) {
-            alts.shift();
+
+        console.log(pressureArr);
+
+        if (altitudeArr.length > dataLength) {
+            altitudeArr.shift();
         }
-        if (temps.length > dataLength) {
-            temps.shift();
+        if (temperatureArr.length > dataLength) {
+            temperatureArr.shift();
         }
-        if (press.length > dataLength) {
-            press.shift();
+        if (pressureArr.length > dataLength) {
+            pressureArr.shift();
         }
-        if (tilts.length > dataLength) {
-            tilts.shift();
+        if (tiltArr.length > dataLength) {
+            tiltArr.shift();
         }
-        if (locs.length > dataLength) {
-            locs.shift();
+        if (locationArr.length > dataLength) {
+            locationArr.shift();
         }
-        if (volts.length > dataLength) {
-            volts.shift();
+        if (voltageArr.length > dataLength) {
+            voltageArr.shift();
         }
         altChart.render();
         tempChart.render();
@@ -76,18 +127,18 @@ window.onload = function () {
         voltChart.render();
 
         // update labels
-        document.getElementById("TimeLabel").textContent = "Time: " + packetArr[1];
-        document.getElementById("PacketCount").textContent = "Packet Count: " + packetArr[2];
-        document.getElementById("Mode").textContent = "Mode: " + packetArr[3];
-        document.getElementById("State").textContent = "State: " + packetArr[4];
-        document.getElementById("HSStatus").textContent = "Heat Shield Deployed: " + packetArr[6];
-        document.getElementById("PCStatus").textContent = "Parachute Deployed: " + packetArr[7];
-        document.getElementById("MastStatus").textContent = "Flag Raised: " + packetArr[8];
-        document.getElementById("VoltageLabel").textContent = "Voltage: " + packetArr[10] +"V";
-        document.getElementById("GPSTimeLabel").textContent = "GPS Time: " + packetArr[12];
-        document.getElementById("GPSAltitude").textContent = "GPS Altitude: " + packetArr[13] + "m";
-        document.getElementById("GPSSats").textContent = "SIV: " + packetArr[16];
-        document.getElementById("CMDEcho").textContent = "Command Echo: " + packetArr[19];
+        document.getElementById("TimeLabel").textContent = "Time: " + missionTime;
+        document.getElementById("PacketCount").textContent = "Packet Count: " + packetCount;
+        document.getElementById("Mode").textContent = "Mode: " + mode;
+        document.getElementById("State").textContent = "State: " + state;
+        document.getElementById("HSStatus").textContent = "Heat Shield Deployed: " + hsDeployed;
+        document.getElementById("PCStatus").textContent = "Parachute Deployed: " + pcDeployed;
+        document.getElementById("MastStatus").textContent = "Flag Raised: " + mastRaised;
+        document.getElementById("VoltageLabel").textContent = "Voltage: " + volt + "V";
+        document.getElementById("GPSTimeLabel").textContent = "GPS Time: " + gpsTime;
+        document.getElementById("GPSAltitude").textContent = "GPS Altitude: " + gpsAltitude + "m";
+        document.getElementById("GPSSats").textContent = "SIV: " + gpsSatellites;
+        document.getElementById("CMDEcho").textContent = "Command Echo: " + cmdEcho;
 
     }
 
@@ -190,13 +241,6 @@ window.onload = function () {
         e.preventDefault();
     });
 
-    var alts = [];
-    var temps = [];
-    var press = [];
-    var tilts = [];
-    var locs = [];
-    var volts = [];
-
     var altChart = new CanvasJS.Chart("altitude", {
         title :{
             text: "Altitude (m)"
@@ -204,7 +248,7 @@ window.onload = function () {
         data: [{
             type: "spline",
             markerSize: 0,
-            dataPoints: alts 
+            dataPoints: altitudeArr 
         }]
     });
     var tempChart = new CanvasJS.Chart("temperature", {
@@ -214,17 +258,17 @@ window.onload = function () {
         data: [{
             type: "spline",
             markerSize: 0,
-            dataPoints: temps
+            dataPoints: temperatureArr
         }]
     })
     var presChart = new CanvasJS.Chart("pressure", {
         title :{
-            text: "Pressure (kPa)"
+            text: "pressure (kPa)"
         },
         data: [{
             type: "spline",
             markerSize: 0,
-            dataPoints: press
+            dataPoints: pressureArr
         }]
     })
     var tiltChart = new CanvasJS.Chart("tilt", {
@@ -234,7 +278,7 @@ window.onload = function () {
         data: [{
             type: "spline",
             markerSize: 0,
-            dataPoints: tilts
+            dataPoints: tiltArr
         }]
     })
     var locChart = new CanvasJS.Chart("location", {
@@ -244,7 +288,7 @@ window.onload = function () {
         data: [{
             type: "spline",
             markerSize: 0,
-            dataPoints: locs
+            dataPoints: locationArr
         }]
     })
     var voltChart = new CanvasJS.Chart("voltage", {
@@ -254,7 +298,7 @@ window.onload = function () {
         data: [{
             type: "spline",
             markerSize: 0,
-            dataPoints: volts
+            dataPoints: voltageArr
         }]
     })
 }

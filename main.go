@@ -3,12 +3,13 @@ package main
 import (
 	"container/list"
 	"fmt"
-	"time"
+	"sync"
 
 	backend "github.com/Aeyu17/CanSat23-Obsidian/backend"
 )
 
 var mode = backend.Mode
+var mu sync.Mutex;
 
 // can be flight, sim, and gen
 /*
@@ -54,16 +55,13 @@ func packetTransceiver(l *list.List) {
 			}
 			backend.WriteToCSV(packet, "genlaunchdata.csv")
 
-		default:
-			continue
 		}
 
 		// TRANSMITTER
 		fmt.Println(packet)
-		for backend.ServerWriting {
-			time.Sleep(time.Second / 100)
-		}
+		mu.Lock()
 		backend.ServerWrite(packet)
+		mu.Unlock()
 	}
 }
 
