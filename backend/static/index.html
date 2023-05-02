@@ -17,62 +17,45 @@
 
     <body>
         <main>
-        <div class="row header justify-content-center align-items-center">
-            <div class="col-sm-2">
+        <div class="header">
+            <div class="logo-img">
                 <img src="./images/Obsidian.png" alt="Obsidian Logo" class="img-thumbnail" width="120" height="120">
             </div>
-            <div class="col-sm-4">UAH Obsidian</div>
-            <div class="col-sm-4 offset-1">CanSat Team 1070</div>
+            <div>UAH Obsidian</div>
+            <div>CanSat Team 1070</div>
         </div>
-        <div class="row hero justify-content-center">
-            <div class="col-sm-9 graph_body align-items-center">
-                <div class="row row-cols-3 main_graphs justify-content-center align-items-center">
-                    <div class="col" id="altitude" style="width: 30%; height: 45%; padding: 0%;"></div>
-                    <div class="col" id="temperature" style="width: 30%; height: 45%; padding: 0%"></div>
-                    <div class="col" id="pressure" style="width: 30%; height: 45%; padding: 0%"></div>
-                    <div class="col" id="tilt" style="width: 30%; height: 45%; padding: 0%"></div>
-                    <div class="col" id="location" style="width: 30%; height: 45%; padding: 0%"></div>
-                    <div class="col" id="voltage" style="width: 30%; height: 45%; padding: 0%"></div>
-                </div>
+        <div class="hero">
+            <div class="main-graphs">
+                <div class="graph" id="altitude"></div>
+                <div class="graph" id="temperature"></div>
+                <div class="graph" id="pressure"></div>
+                <div class="graph" id="tilt"></div>
+                <div class="graph" id="location"></div>
+                <div class="graph" id="voltage"></div>
             </div>
-            <div class="col-sm-3 sidebar">
-                <div class="col justify-content-center align-items-center">
-                    <div class="col" id="TimeLabel">Time: 00:00:00</div>
-                    <div class="col" id="GPSTimeLabel">GPS Time: 00:00:00</div>
-                    <div class="col" id="PacketCount">Packet Count: 0</div>
-                    <div class="col" id="Mode">Mode: F</div>
-                    <div class="col" id="State">State: Not Connected</div>
-                    <div class="col" id="HSStatus">Heat Shield Deployed: N</div>
-                    <div class="col" id="PCStatus">Parachute Deployed: N</div>
-                    <div class="col" id="MastStatus">Flag Raised: N</div>
-                    <div class="col" id="VoltageLabel">Voltage: 6V</div>
-                    <div class="col" id="GPSAltitude">GPS Altitude: 0m</div>
-                    <div class="col" id="GPSSats">SIV: 0</div>
-                    <div class="col" id="CMDEcho">Command Echo: None</div>
-
-                    <button type="button" id="testBtn">Test Button</button>
+            <div class="sidebar">
+                <div class="labels">
+                    <div id="TimeLabel">Time: 00:00:00</div>
+                    <div id="GPSTimeLabel">GPS Time: 00:00:00</div>
+                    <div id="PacketCount">Packet Count: 0</div>
+                    <div id="Mode">Mode: F</div>
+                    <div id="State">State: Not Connected</div>
+                    <div id="HSStatus">Heat Shield Deployed: N</div>
+                    <div id="PCStatus">Parachute Deployed: N</div>
+                    <div id="MastStatus">Flag Raised: N</div>
+                    <div id="VoltageLabel">Voltage: 6V</div>
+                    <div id="GPSAltitude">GPS Altitude: 0m</div>
+                    <div id="GPSSats">SIV: 0</div>
+                    <div id="CMDEcho">Command Echo: None</div>
+                </div>
+                <div class="cmd-panel">
                     <div>
                         <input type="checkbox" id="telemetryToggle" name="telemetryToggle">
                         <label for="telemetryToggle">Telemetry</label>
                     </div>
-                    <!--
-                    custom set time??
-                    <form class="gps">
-                        <input id="gpsinput"></input>
-                        <input type="submit"></input>
-                    </form>
-                    -->
-                    <!-- set up SIMA, SIME, SIMD pls-->
-                    <div class="row-sm-2">
-                        <button type="button" id="setGPSTimeBtn">Set GPS Time</button>
-                        <button type="button" id="setCurTimeBtn">Set Current Time</button>
-                        <button type="button" id="calBtn">Calibrate Altitude</button>
-                        <button type="button" id="mrBtn">Manual Release</button>
-                        <button type="button" id="hsBtn">Heat Shield Deploy</button>
-                        <button type="button" id="pcBtn">Parachute Release</button>
-                        <button type="button" id="pingBtn">Ping</button>
-                        <button type="button" id="resetBtn">Reset</button>
-                        <button type="button" id="genBtn">Generator</button>
+                    <div>
+                        <input type="checkbox" id="simulationToggle" name="simulationToggle">
+                        <label for="simulationToggle">Simulation</label>
                     </div>
                     <div>
                         <input type="checkbox" id="audioToggle" name="audioToggle">
@@ -82,9 +65,21 @@
                         <input type="checkbox" id="ledToggle" name="ledToggle">
                         <label for="ledToggle">LED Toggle</label>
                     </div>
+
+                    <button type="button" id="setGPSTimeBtn">Set GPS Time</button>
+                    <button type="button" id="setCurTimeBtn">Set Current Time</button>
+                    <button type="button" id="calBtn">Calibrate Altitude</button>
+                    <button type="button" id="mrBtn">Manual Release</button>
+                    <button type="button" id="hsBtn">Heat Shield Deploy</button>
+                    <button type="button" id="pcBtn">Parachute Release</button>
+                    <button type="button" id="simBtn">Activate Simulation</button>
+                    <button type="button" id="relResetBtn">Reset Release Mechanisms</button>
+                    <button type="button" id="pingBtn">Ping</button>
+                    <button type="button" id="resetBtn">Reset</button>
                 </div>
             </div>
         </div>
+        
         </main>
 
         <script src="index.js"></script>

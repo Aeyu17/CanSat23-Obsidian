@@ -15,6 +15,7 @@ let locationArr = [];
 let gpsSatellites = -1;
 let tiltArr = [];
 let cmdEcho = "NONE";
+let simMode = false;
 
 let startTime = "00:00:00";
 
@@ -142,12 +143,6 @@ window.onload = function () {
         }
     };
 
-    let testBtn = document.getElementById("testBtn");
-    testBtn.addEventListener("click", function (e) {
-        gcsSocket.send("Test Button Clicked");
-        e.preventDefault();
-    });
-
     let telemToggle = document.getElementById("telemetryToggle");
     telemToggle.addEventListener("change", function (e){
         if (telemToggle.checked){
@@ -231,9 +226,31 @@ window.onload = function () {
         e.preventDefault();
     });
 
-    let genBtn = document.getElementById("genBtn");
-    genBtn.addEventListener("click", function (e){
-        gcsSocket.send("GEN");
+    let resetReleaseBtn = document.getElementById("relResetBtn");
+    resetReleaseBtn.addEventListener("click", function (e){
+        gcsSocket.send("RESREL");
+        e.preventDefault();
+    });
+
+    let simBtn = document.getElementById("simBtn");
+    simBtn.addEventListener("click", function (e){
+        if (simMode) {
+            gcsSocket.send("SIMA");
+        } else {
+            gcsSocket.send("GEN");
+        }
+        e.preventDefault();
+    });
+
+    let simToggle = document.getElementById("simulationToggle");
+    simToggle.addEventListener("change", function (e){
+        if (simToggle.checked){
+            simMode = true;
+            gcsSocket.send("SIME");
+        } else {
+            simMode = false;
+            gcsSocket.send("SIMD");
+        }
         e.preventDefault();
     });
 

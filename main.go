@@ -34,6 +34,9 @@ func packetTransceiver(l *list.List) {
 			backend.WriteToCSV(packet, "flightlaunchdata.csv")
 
 		case "sim":
+			if !backend.SimActive {
+				continue
+			}
 			simpPacket := backend.ReadPressureCSV("cansat_2023_simp.csv")
 			if len(simpPacket) == 0 {
 				fmt.Println("Simulation complete.")

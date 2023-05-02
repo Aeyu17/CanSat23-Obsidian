@@ -102,6 +102,10 @@ func reader(conn *websocket.Conn) {
 			fmt.Println("ACTLED CALLED")
 			SendPacket("CMD,1070,ACT,LED\n")
 
+		case "RESREL":
+			fmt.Println("RESREL CALLED")
+			SendPacket("CMD,1070,RESREL\n")
+
 		case "PING":
 			fmt.Println("PING CALLED")
 			start := time.Now()
