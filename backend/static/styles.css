@@ -74,7 +74,10 @@
 
 .cmd-panel {
     display: grid;
+    gap: 5px;
     grid-template-columns: auto auto;
+    justify-content: center;
+    align-items: center;
 
     padding: 5px;
 

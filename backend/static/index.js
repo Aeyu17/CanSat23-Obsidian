@@ -255,9 +255,15 @@ window.onload = function () {
     });
 
     let altChart = new CanvasJS.Chart("altitude", {
-        title :{
-            text: "Altitude (m)",
+        title:{
+            text: "Altitude",
             fontFamily
+        },
+        axisX:{
+            title: "Time (s)"
+        },
+        axisY:{
+            title: "Altitude (m)"
         },
         data: [{
             type: "spline",
@@ -266,9 +272,15 @@ window.onload = function () {
         }]
     });
     let tempChart = new CanvasJS.Chart("temperature", {
-        title :{
-            text: "Temperature (°C)",
+        title:{
+            text: "Temperature",
             fontFamily
+        },
+        axisX:{
+            title: "Time (s)"
+        },
+        axisY:{
+            title: "Temperature (°C)"
         },
         data: [{
             type: "spline",
@@ -277,9 +289,15 @@ window.onload = function () {
         }]
     })
     let presChart = new CanvasJS.Chart("pressure", {
-        title :{
-            text: "Pressure (kPa)",
+        title:{
+            text: "Pressure",
             fontFamily
+        },
+        axisX:{
+            title: "Time (s)"
+        },
+        axisY:{
+            title: "Pressure (kPa)"
         },
         data: [{
             type: "spline",
@@ -288,9 +306,15 @@ window.onload = function () {
         }]
     })
     let tiltChart = new CanvasJS.Chart("tilt", {
-        title :{
-            text: "Tilt (°)",
+        title:{
+            text: "Tilt",
             fontFamily
+        },
+        axisX:{
+            title: "Tilt X (°)"
+        },
+        axisY:{
+            title: "Tilt Y (°)"
         },
         data: [{
             type: "spline",
@@ -299,9 +323,15 @@ window.onload = function () {
         }]
     })
     let locChart = new CanvasJS.Chart("location", {
-        title :{
-            text: "Location (°)",
+        title:{
+            text: "Location",
             fontFamily
+        },
+        axisX:{
+            title: "Longitude (°)"
+        },
+        axisY:{
+            title: "Latitude (°)"
         },
         data: [{
             type: "spline",
@@ -310,9 +340,15 @@ window.onload = function () {
         }]
     })
     let voltChart = new CanvasJS.Chart("voltage", {
-        title :{
-            text: "Voltage (V)",
+        title:{
+            text: "Voltage",
             fontFamily
+        },
+        axisX:{
+            title: "Time (s)"
+        },
+        axisY:{
+            title: "Voltage (V)"
         },
         data: [{
             type: "spline",
@@ -320,4 +356,11 @@ window.onload = function () {
             dataPoints: voltageArr
         }]
     })
+
+    altChart.render();
+    tempChart.render();
+    presChart.render();
+    tiltChart.render();
+    locChart.render();
+    voltChart.render();
 }
