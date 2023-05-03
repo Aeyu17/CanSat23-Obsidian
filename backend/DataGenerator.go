@@ -8,19 +8,21 @@ import (
 )
 
 const team_id = "1070"
-var packetCount = 0
-var mode = "S"
-var state = "READY"
-var altitude = 0.0
-var hs_deployed = "N"
-var pc_deployed = "N"
-var mast_raised = "N"
-var pressure = 1000.0
-var gpsLat = 34.82
-var gpsLong = -86.64
-var gpsSats = 13
-var tiltx = 0.0
-var tilty = 0.0
+var (
+	packetCount = 0
+	mode = "S"
+	state = "READY"
+	altitude = 0.0
+	hs_deployed = "N"
+	pc_deployed = "N"
+	mast_raised = "N"
+	pressure = 1000.0
+	gpsLat = 34.82
+	gpsLong = -86.64
+	gpsSats = 13
+	tiltx = 0.0
+	tilty = 0.0
+)
 const cmd_echo = "CXON"
 
 

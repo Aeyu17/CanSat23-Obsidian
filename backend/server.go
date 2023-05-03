@@ -224,7 +224,7 @@ func reader(conn *websocket.Conn) {
 			gpsSats = 13
 			tiltx = 0.0
 			tilty = 0.0
-			
+
 			lineIndex = 0
 
 			ClearQueue(PacketList)
