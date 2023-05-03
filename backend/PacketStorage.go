@@ -8,6 +8,7 @@ import (
 )
 
 var PacketList *list.List = new(list.List)
+var sem = make(chan int, 1)
 
 func PacketReceiver(c chan string) {
 	go ReceivePacket()
@@ -32,6 +33,7 @@ func PacketReceiver(c chan string) {
 
 func PacketEnqueuer(c chan string, l *list.List) {
 	for {
+		sem <- 1
 		packet := <- c
 		var packetArr = strings.Split(packet, ",")
 		if packetArr[0] != "1070" || !(len(packetArr) == 2 || len(packetArr) == 20) {
@@ -40,6 +42,7 @@ func PacketEnqueuer(c chan string, l *list.List) {
 		}
 		l.PushBack(packet)
 		fmt.Println("Packet queued.")
+		fmt.Println(<- sem)
 	}
 }
 
@@ -74,7 +77,9 @@ func GetPingPacket(l *list.List) (packet string) {
 }
 
 func ClearQueue(l *list.List) {
+	sem <- 2
 	for item := l.Front(); item != nil; item = item.Next() {
 		l.Remove(item)
 	}
+	fmt.Println(<- sem)
 }
