@@ -43,7 +43,8 @@ func packetTransceiver(l *list.List) {
 				backend.Mode = "none"
 				continue
 			}
-			backend.SendPacket(simpPacket)
+			backend.SendPacket(simpPacket + "\n")
+			time.Sleep(time.Second/2)
 
 			packet = backend.GetDataPacket(l)
 			if packet == "Empty" {

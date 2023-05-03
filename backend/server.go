@@ -94,6 +94,7 @@ func reader(conn *websocket.Conn) {
 
 			Mode = "none"
 			SimActive = false
+			lineIndex = 0
 			fmt.Println("No mode enabled.")
 			SendPacket("CMD,1070,SIM,DISABLE\n")
 
@@ -223,6 +224,8 @@ func reader(conn *websocket.Conn) {
 			gpsSats = 13
 			tiltx = 0.0
 			tilty = 0.0
+			
+			lineIndex = 0
 
 			ClearQueue(PacketList)
 
