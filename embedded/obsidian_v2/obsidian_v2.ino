@@ -41,7 +41,7 @@ float voltage;
 String missionTime = "00:00:00";
 int packetCount = 0;
 char flightMode = 'F';
-String flightState = "READY"; // ONLY FOR DEBUG PURPOSES IF SHIT GOES WRONG ITS HERE BOZO
+String flightState = "IDLE"; // ONLY FOR DEBUG PURPOSES IF SHIT GOES WRONG ITS HERE BOZO
 char hs_deployed = 'N';
 char pc_deployed = 'N';
 char mast_raised = 'N';
@@ -504,13 +504,13 @@ void updateData() {
   }
 
   // SAM
-//  if (samWorking) {
-//    latitude = myGNSS.getLatitude()/10000000.0;
-//    longitude = myGNSS.getLongitude()/10000000.0;
-//    gps_altitude = myGNSS.getAltitude()/1000.0;
-//    siv = myGNSS.getSIV();
-//    gps_time = (String)myGNSS.getHour() + ":" + (String)myGNSS.getMinute() + ":" + (String)myGNSS.getSecond();
-//  }
+  if (samWorking) {
+    latitude = myGNSS.getLatitude()/10000000.0;
+    longitude = myGNSS.getLongitude()/10000000.0;
+    gps_altitude = myGNSS.getAltitude()/1000.0;
+    siv = myGNSS.getSIV();
+    gps_time = (String)myGNSS.getHour() + ":" + (String)myGNSS.getMinute() + ":" + (String)myGNSS.getSecond();
+  }
   
   // BNO
   if (bnoWorking) {
@@ -521,8 +521,7 @@ void updateData() {
   }
 
   // ADC Voltage
-  //voltage = analogRead(A2)*(6.6/8192)*2;
-  voltage = analogRead(A2)*(6.6/2048)*2;
+  voltage = analogRead(39)*(3.3/16384);
 
   // Mission Time
   int dtime = round(millis()/1000);

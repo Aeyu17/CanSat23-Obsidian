@@ -16,11 +16,8 @@ func PacketReceiver(c chan string) {
 		var packet string;
 		if Mode == "flight" || Mode == "sim" {
 			packet = <- PacketReceiverChannel
-			fmt.Println("Wahoo!")
-			if strings.Split(packet, ",")[0] == "1070" {
-				c <- packet
-				fmt.Println("Packet Received")
-			}
+			c <- packet
+			fmt.Println("Packet Received")
 		} else if Mode == "gen" {
 			time.Sleep(time.Second)
 			packet = GeneratePacket()

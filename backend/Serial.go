@@ -45,6 +45,7 @@ func InitPort(baud int) (SerialPort *serial.Port) {
 	}
 	if Port == "" {
 		fmt.Println("No valid COM ports found.")
+		SerialConnected = false
 		return nil
 	}
 	
