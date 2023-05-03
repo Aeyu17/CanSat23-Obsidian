@@ -6,7 +6,7 @@ import (
 	"bufio"
 
 	"github.com/tarm/serial"
-	serialBug "go.bug.st/serial"
+	"go.bug.st/serial/enumerator"
 )
  
 const BAUD = 9600
@@ -18,20 +18,36 @@ var (
 )
 
 func InitPort(baud int) (SerialPort *serial.Port) {
-	portList, err := serialBug.GetPortsList()
+	portList, err := enumerator.GetDetailedPortsList()
 	if err != nil {
 		log.Fatal(err)
 	}
-	
+
 	if len(portList) == 0 {
 		fmt.Println("No COM ports found.")
 		SerialConnected = false
 		return nil
-	} else if len(portList) > 1 {
-		fmt.Println("Multiple COM ports found. Disconnect any extra devices.")
 	}
+	/*
+	fmt.Println("Port Name:", portList[0].Name)
+	fmt.Println("Is USB:", portList[0].IsUSB)
+	fmt.Println("VID:", portList[0].VID)
+	fmt.Println("PID:", portList[0].PID)
+	fmt.Println("Serial Number:", portList[0].SerialNumber)
+	fmt.Println("Product:", portList[0].Product)
+	*/
 
-	Port = portList[0]
+	for _, p := range portList {
+		if p.IsUSB && p.PID == "6015" && p.VID == "0403" {
+			Port = p.Name
+			break
+		}
+	}
+	if Port == "" {
+		fmt.Println("No valid COM ports found.")
+		return nil
+	}
+	
 	fmt.Println("Connected to", Port)
 	c := &serial.Config{Name: Port, Baud: baud}
 	SerialPort, err = serial.OpenPort(c)
