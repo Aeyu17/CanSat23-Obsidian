@@ -223,6 +223,157 @@ window.onload = function () {
     let resetBtn = document.getElementById("resetBtn");
     resetBtn.addEventListener("click", function (e){
         gcsSocket.send("RESET");
+        missionTime = "00:00:00";
+        packetCount = -1;
+        mode = "F";
+        state = "IDLE";
+        altitudeArr = [];
+        hsDeployed = "N";
+        pcDeployed = "N";
+        mastRaised = "N";
+        temperatureArr = [];
+        pressureArr = [];
+        voltageArr = [];
+        gpsTime = "00:00:00";
+        gpsAltitude = 0.0;
+        locationArr = [];
+        gpsSatellites = -1;
+        tiltArr = [];
+        cmdEcho = "NONE";
+        simMode = false;
+
+        startTime = "00:00:00";
+
+        altChart.destroy();
+        tempChart.destroy();
+        presChart.destroy();
+        tiltChart.destroy();
+        locChart.destroy();
+        voltChart.destroy();
+
+        altChart = new CanvasJS.Chart("altitude", {
+            title:{
+                text: "Altitude",
+                fontFamily
+            },
+            axisX:{
+                title: "Time (s)"
+            },
+            axisY:{
+                title: "Altitude (m)"
+            },
+            data: [{
+                type: "spline",
+                markerSize: 0,
+                dataPoints: altitudeArr 
+            }]
+        });
+        tempChart = new CanvasJS.Chart("temperature", {
+            title:{
+                text: "Temperature",
+                fontFamily
+            },
+            axisX:{
+                title: "Time (s)"
+            },
+            axisY:{
+                title: "Temperature (°C)"
+            },
+            data: [{
+                type: "spline",
+                markerSize: 0,
+                dataPoints: temperatureArr
+            }]
+        })
+        presChart = new CanvasJS.Chart("pressure", {
+            title:{
+                text: "Pressure",
+                fontFamily
+            },
+            axisX:{
+                title: "Time (s)"
+            },
+            axisY:{
+                title: "Pressure (kPa)"
+            },
+            data: [{
+                type: "spline",
+                markerSize: 0,
+                dataPoints: pressureArr
+            }]
+        })
+        tiltChart = new CanvasJS.Chart("tilt", {
+            title:{
+                text: "Tilt",
+                fontFamily
+            },
+            axisX:{
+                title: "Tilt X (°)"
+            },
+            axisY:{
+                title: "Tilt Y (°)"
+            },
+            data: [{
+                type: "spline",
+                markerSize: 0,
+                dataPoints: tiltArr
+            }]
+        })
+        locChart = new CanvasJS.Chart("location", {
+            title:{
+                text: "Location",
+                fontFamily
+            },
+            axisX:{
+                title: "Longitude (°)"
+            },
+            axisY:{
+                title: "Latitude (°)"
+            },
+            data: [{
+                type: "spline",
+                markerSize: 0,
+                dataPoints: locationArr
+            }]
+        })
+        voltChart = new CanvasJS.Chart("voltage", {
+            title:{
+                text: "Voltage",
+                fontFamily
+            },
+            axisX:{
+                title: "Time (s)"
+            },
+            axisY:{
+                title: "Voltage (V)"
+            },
+            data: [{
+                type: "spline",
+                markerSize: 0,
+                dataPoints: voltageArr
+            }]
+        })
+
+        altChart.render();
+        tempChart.render();
+        presChart.render();
+        tiltChart.render();
+        locChart.render();
+        voltChart.render();
+
+        document.getElementById("TimeLabel").textContent = "Time: 00:00:00";
+        document.getElementById("PacketCount").textContent = "Packet Count: 0";
+        document.getElementById("Mode").textContent = "Mode: F";
+        document.getElementById("State").textContent = "State: Not Connected";
+        document.getElementById("HSStatus").textContent = "Heat Shield Deployed: N";
+        document.getElementById("PCStatus").textContent = "Parachute Deployed: N";
+        document.getElementById("MastStatus").textContent = "Flag Raised: N";
+        document.getElementById("VoltageLabel").textContent = "Voltage: 0V";
+        document.getElementById("GPSTimeLabel").textContent = "GPS Time: 00:00:00";
+        document.getElementById("GPSAltitude").textContent = "GPS Altitude: 0m";
+        document.getElementById("GPSSats").textContent = "SIV: 0";
+        document.getElementById("CMDEcho").textContent = "Command Echo: None";
+
         e.preventDefault();
     });
 

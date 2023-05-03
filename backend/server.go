@@ -45,28 +45,53 @@ func reader(conn *websocket.Conn) {
 		switch string(p) {
 		case "CXON":
 			fmt.Println("CXON CALLED")
+			if Mode != "none" {
+				fmt.Println("CXON ignored, turn off current mode.")
+				continue
+			}
+
 			Mode = "flight"
 			fmt.Println("Flight mode enabled.")
 			SendPacket("CMD,1070,CX,ON\n")
 
 		case "CXOFF":
 			fmt.Println("CXOFF CALLED")
+			if Mode != "flight" {
+				fmt.Println("CXOFF ignored, turn on flight mode.")
+				continue
+			}
+
 			Mode = "none"
 			fmt.Println("No mode enabled.")
 			SendPacket("CMD,1070,CX,OFF\n")
 
 		case "STGPS":
 			fmt.Println("STGPS CALLED")
+			if !(Mode == "flight" || Mode == "sim") {
+				fmt.Println("STGPS ignored, turn on flight or sim mode.")
+				continue
+			}
+
 			SendPacket("CMD,1070,ST,GPS\n")
 
 		case "SIME":
 			fmt.Println("SIME CALLED")
+			if Mode != "none" {
+				fmt.Println("SIME ignored, turn off current mode.")
+				continue
+			}
+
 			Mode = "sim"
 			fmt.Println("Simulation mode enabled.")
 			SendPacket("CMD,1070,SIM,ENABLE\n")
 
 		case "SIMD":
 			fmt.Println("SIMD CALLED")
+			if Mode != "sim" {
+				fmt.Println("SIMD ignored, turn on simulation mode.")
+				continue
+			}
+
 			Mode = "none"
 			SimActive = false
 			fmt.Println("No mode enabled.")
@@ -74,40 +99,84 @@ func reader(conn *websocket.Conn) {
 
 		case "SIMA":
 			fmt.Println("SIMA CALLED")
+			if Mode != "sim" {
+				fmt.Println("SIMA ignored, turn on simulation mode.")
+				continue
+			}
+
 			SimActive = true
 			fmt.Println("Simulation mode activated.")
 			SendPacket("CMD,1070,SIM,ACTIVATE\n")
 
 		case "CAL":
 			fmt.Println("CAL CALLED")
+			if !(Mode == "flight" || Mode == "sim") {
+				fmt.Println("CAL ignored, turn on flight or sim mode.")
+				continue
+			}
+
 			SendPacket("CMD,1070,CAL\n")
 
 		case "ACTMR":
 			fmt.Println("ACTMR CALLED")
+			if !(Mode == "flight" || Mode == "sim") {
+				fmt.Println("ACTMR ignored, turn on flight or sim mode.")
+				continue
+			}
+
 			SendPacket("CMD,1070,ACT,MR\n")
 			
 		case "ACTHS":
 			fmt.Println("ACTHS CALLED")
+			if !(Mode == "flight" || Mode == "sim") {
+				fmt.Println("ACTHS ignored, turn on flight or sim mode.")
+				continue
+			}
+
 			SendPacket("CMD,1070,ACT,HS\n")
 
 		case "ACTPC":
 			fmt.Println("ACTPC CALLED")
+			if !(Mode == "flight" || Mode == "sim") {
+				fmt.Println("ACTPC ignored, turn on flight or sim mode.")
+				continue
+			}
+
 			SendPacket("CMD,1070,ACT,PC\n")
 
 		case "ACTAB":
 			fmt.Println("ACTAB CALLED")
+			if !(Mode == "flight" || Mode == "sim") {
+				fmt.Println("ACTAB ignored, turn on flight or sim mode.")
+				continue
+			}
+
 			SendPacket("CMD,1070,ACT,AB\n")
 
 		case "ACTLED":
 			fmt.Println("ACTLED CALLED")
+			if !(Mode == "flight" || Mode == "sim") {
+				fmt.Println("ACTLED ignored, turn on flight or sim mode.")
+				continue
+			}
+
 			SendPacket("CMD,1070,ACT,LED\n")
 
 		case "RESREL":
 			fmt.Println("RESREL CALLED")
+			if !(Mode == "flight" || Mode == "sim") {
+				fmt.Println("RESREL ignored, turn on flight or sim mode.")
+				continue
+			}
 			SendPacket("CMD,1070,RESREL\n")
 
 		case "PING":
 			fmt.Println("PING CALLED")
+			if !(Mode == "flight" || Mode == "sim") {
+				fmt.Println("PING ignored, turn on flight or sim mode.")
+				continue
+			}
+
 			start := time.Now()
 
 			SendPacket("CMD,1070,PING\n")
@@ -139,17 +208,45 @@ func reader(conn *websocket.Conn) {
 	
 		case "RESET":
 			fmt.Println("RESET CALLED")
+			Mode = "none"
+
+			packetCount = 0
+			mode = "S"
+			state = "READY"
+			altitude = 0.0
+			hs_deployed = "N"
+			pc_deployed = "N"
+			mast_raised = "N"
+			pressure = 1000.0
+			gpsLat = 34.82
+			gpsLong = -86.64
+			gpsSats = 13
+			tiltx = 0.0
+			tilty = 0.0
+
+			ClearQueue(PacketList)
 
 		case "GEN":
+			fmt.Println("GEN CALLED")
+			if Mode != "none" {
+				fmt.Println("GEN ignored, turn off current mode.")
+				continue
+			}
 			Mode = "gen"
 			fmt.Println("Generator mode enabled.")
 
 		default:
 			if string(p)[0:2] == "ST" {
 				fmt.Println("STCUS ACTIVATED")
+				if !(Mode == "flight" || Mode == "sim") {
+					fmt.Println("STCUS ignored, turn on flight or sim mode.")
+					continue
+				}
+
 				SendPacket("CMD,1070,ST," + string(p)[2:] + "\n")
 			} else {
 				fmt.Println("OTHER MESSAGE RECEIVED")
+				fmt.Println(p)
 			}
 		}
 		

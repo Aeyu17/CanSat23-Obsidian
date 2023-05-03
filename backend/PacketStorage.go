@@ -72,3 +72,9 @@ func GetPingPacket(l *list.List) (packet string) {
 	}
 	return "Empty"
 }
+
+func ClearQueue(l *list.List) {
+	for item := l.Front(); item != nil; item = item.Next() {
+		l.Remove(item)
+	}
+}
