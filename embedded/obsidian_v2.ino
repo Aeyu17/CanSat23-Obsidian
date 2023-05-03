@@ -17,8 +17,8 @@ Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28); // I2C address 0x28
 float temperature;
 float altitude;
 float pressure;
-float alt_offset;
-double last_alt;
+float alt_offset; //
+double last_alt; //
 
 // SAM
 float latitude;
@@ -39,26 +39,26 @@ float voltage;
 
 // Internal for Packet
 String missionTime = "00:00:00";
-int packetCount = 0;
-char flightMode = 'F';
-String flightState = "READY"; // ONLY FOR DEBUG PURPOSES IF SHIT GOES WRONG ITS HERE BOZO
-char hs_deployed = 'N';
-char pc_deployed = 'N';
-char mast_raised = 'N';
-String cmdecho = "NONE";
+int packetCount = 0; //
+char flightMode = 'F'; //
+String flightState = "READY"; // ONLY FOR DEBUG PURPOSES IF SHIT GOES WRONG ITS HERE BOZO //
+char hs_deployed = 'N'; //
+char pc_deployed = 'N'; //
+char mast_raised = 'N'; //
+String cmdecho = "NONE"; //
 
 // Internal for Reset
-int startHour;
-int startMinute;
-int startSecond;
-bool containerReleased;
-bool shieldDeployed;
-bool chuteReleased;
-bool flagRaised;
-bool bmpWorking = true;
-bool bnoWorking = true;
-bool samWorking = true;
-bool sdWorking = true;
+int startHour; //
+int startMinute; //
+int startSecond; //
+bool containerReleased; //
+bool shieldDeployed; //
+bool chuteReleased; //
+bool flagRaised; //
+bool bmpWorking = true; //
+bool bnoWorking = true; //
+bool samWorking = true; //
+bool sdWorking = true; //
 
 int ledPin = 27;
 int rServoPin = 32;
@@ -67,6 +67,7 @@ int hServoPin = 14;
 int buzPin = 21;
 
 File packet_csv;
+File backup_txt;
 Servo release_servo;
 Servo flag_servo;
 Servo hs_servo;
@@ -157,10 +158,56 @@ void setup() {
 
   if (sdWorking){
     Serial.println("SD WORKING");
-    SD.remove("/testlaunchdata.csv");
+    backup_txt = SD.open("/reset.txt", FILE_READ);
+    
+    if (backup_txt) {
+      // RESTORE CSV VALUES HERE
+      backup_txt.seek(0);
+      String readFile = backup_txt.readStringUntil('\n');
+      
+      startHour = itemAt(readFile,0).toInt();
+      startMinute = itemAt(readFile,1).toInt();
+      startSecond = itemAt(readFile,2).toInt();
+      alt_offset = itemAt(readFile,3).toInt();
+      packetCount = itemAt(readFile,4).toInt();
+      flightMode = itemAt(readFile,5).charAt(0); 
+      flightState = itemAt(readFile,6);
+      hs_deployed = itemAt(readFile,7).charAt(0);
+      pc_deployed = itemAt(readFile,8).charAt(0);
+      mast_raised = itemAt(readFile,9).charAt(0);
+      containerReleased = (itemAt(readFile, 10) == "true");
+      shieldDeployed = (itemAt(readFile, 11) == "true");
+      chuteReleased = (itemAt(readFile, 12) == "true");
+      flagRaised = (itemAt(readFile, 13) == "true");
+      cmdecho = itemAt(readFile,14);
+    } 
+    else {
+      backup_txt.close();
+      backup_txt = SD.open("/reset.txt", FILE_WRITE);
+      String resetPacket = String(startHour) + "," + 
+                           String(startMinute) + "," +
+                           String(startSecond) + "," +
+                           String(alt_offset) + "," + 
+                           String(packetCount) + "," + 
+                           String(flightMode) + "," + 
+                           String(flightState) + "," + 
+                           String(hs_deployed) + "," + 
+                           String(pc_deployed) + "," + 
+                           String(mast_raised) + "," + 
+                           String(containerReleased) + "," +
+                           String(shieldDeployed) + "," +
+                           String(chuteReleased) + "," + 
+                           String(flagRaised) + "," +
+                           String(cmdecho) + "\n";
+      writeToFile(resetPacket, backup_txt); 
+      backup_txt.close();
+    }
     packet_csv = SD.open("/testlaunchdata.csv", FILE_WRITE);
     if (!packet_csv){
       Serial.println("SD CSV DID NOT OPEN PROPERLY");
+    } 
+    else {
+      writeToFile("TEAM_ID,MISSION_TIME,PACKET_COUNT,MODE,STATE,ALTITUDE,HS_DEPLOYED,PC_DEPLOYED,MAST_RAISED,TEMPERATURE,VOLTAGE,PRESSURE,GPS_TIME,GPS_ALTITUDE,GPS_LATITUDE,GPS_LONGITUDE,GPS_SATS,TILT_X,TILT_Y,CMD_ECHO", packet_csv);
     }
     packet_csv.close();
   }
@@ -314,7 +361,6 @@ void chuteRelease() {
   release_servo.write(0);
   pinMode(A5, LOW);
 }
-
 
 // second shield deploy
 void upright() {
@@ -474,6 +520,13 @@ void readcommands(){
           cmdecho = "ACTLED";
           ledBlink();
         }
+        else if (cmd == "RESREL") {
+          cmdecho = "RESREL";
+          release_servo.write(180);
+          flag_servo.write(0);
+          // adam give us the degrees thanks
+          // hs_servo.write();
+        }
         else {
           Serial.println("Invalid command received.");
         }
@@ -504,13 +557,13 @@ void updateData() {
   }
 
   // SAM
-//  if (samWorking) {
-//    latitude = myGNSS.getLatitude()/10000000.0;
-//    longitude = myGNSS.getLongitude()/10000000.0;
-//    gps_altitude = myGNSS.getAltitude()/1000.0;
-//    siv = myGNSS.getSIV();
-//    gps_time = (String)myGNSS.getHour() + ":" + (String)myGNSS.getMinute() + ":" + (String)myGNSS.getSecond();
-//  }
+  if (samWorking) {
+    latitude = myGNSS.getLatitude()/10000000.0;
+    longitude = myGNSS.getLongitude()/10000000.0;
+    gps_altitude = myGNSS.getAltitude()/1000.0;
+    siv = myGNSS.getSIV();
+    gps_time = (String)myGNSS.getHour() + ":" + (String)myGNSS.getMinute() + ":" + (String)myGNSS.getSecond();
+  }
   
   // BNO
   if (bnoWorking) {
@@ -602,6 +655,24 @@ void loop() {
  
   if (sdWorking){
     packet_csv = SD.open("/testlaunchdata.csv", FILE_APPEND);
+    backup_txt = SD.open("/reset.txt", FILE_WRITE);
+    String resetPacket = String(startHour) + "," + 
+                         String(startMinute) + "," +
+                         String(startSecond) + "," +
+                         String(alt_offset) + "," + 
+                         String(packetCount) + "," + 
+                         String(flightMode) + "," + 
+                         String(flightState) + "," + 
+                         String(hs_deployed) + "," + 
+                         String(pc_deployed) + "," + 
+                         String(mast_raised) + "," + 
+                         String(containerReleased) + "," +
+                         String(shieldDeployed) + "," +
+                         String(chuteReleased) + "," + 
+                         String(flagRaised) + "," +
+                         String(cmdecho) + '\n';
+    writeToFile(resetPacket, backup_txt); 
+    backup_txt.close();
   }
   
   if (flightState != "IDLE") {
