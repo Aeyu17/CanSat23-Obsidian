@@ -374,6 +374,11 @@ window.onload = function () {
         document.getElementById("GPSSats").textContent = "SIV: 0";
         document.getElementById("CMDEcho").textContent = "Command Echo: None";
 
+        document.getElementById("telemetryToggle").checked = false;
+        document.getElementById("simulationToggle").checked = false;
+        document.getElementById("audioToggle").checked = false;
+        document.getElementById("ledToggle").checked = false;
+
         e.preventDefault();
     });
 
