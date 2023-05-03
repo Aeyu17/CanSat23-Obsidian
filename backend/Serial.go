@@ -6,22 +6,37 @@ import (
 	"bufio"
 
 	"github.com/tarm/serial"
+	serialBug "go.bug.st/serial"
 )
-
-const PORT = "COM7"
+ 
 const BAUD = 9600
 var (
-	SerialPort = InitPort(PORT, BAUD)
+	Port string;
+	SerialPort = InitPort(BAUD)
 	PacketReceiverChannel = make(chan string, 100)
 	SerialConnected = true
 )
 
-func InitPort(port string, baud int) (SerialPort *serial.Port) {
-	c := &serial.Config{Name: port, Baud: baud}
-	SerialPort, err := serial.OpenPort(c)
+func InitPort(baud int) (SerialPort *serial.Port) {
+	portList, err := serialBug.GetPortsList()
 	if err != nil {
-		log.Println(err)
+		log.Fatal(err)
+	}
+	
+	if len(portList) == 0 {
+		fmt.Println("No COM ports found.")
 		SerialConnected = false
+		return nil
+	} else if len(portList) > 1 {
+		fmt.Println("Multiple COM ports found. Disconnect any extra devices.")
+	}
+
+	Port = portList[0]
+	fmt.Println("Connected to", Port)
+	c := &serial.Config{Name: Port, Baud: baud}
+	SerialPort, err = serial.OpenPort(c)
+	if err != nil {
+		log.Fatal(err)
 	}
 	return
 }

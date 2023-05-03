@@ -73,7 +73,6 @@ func packetTransceiver(l *list.List) {
 }
 
 func main() {
-	
 	defer backend.SerialPort.Close()
 
 	var packetChannel = make(chan string, 100)
