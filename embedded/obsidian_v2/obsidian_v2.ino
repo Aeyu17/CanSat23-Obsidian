@@ -60,11 +60,13 @@ bool bnoWorking = true;
 bool samWorking = true;
 bool sdWorking = true;
 
-int ledPin = 27;
-int rServoPin = 32;
-int fServoPin = 15;
-int hServoPin = 14;
-int buzPin = 21;
+// Pins
+const int ledPin = 27;
+const int rServoPin = 32;
+const int fServoPin = 15;
+const int hServoPin = 14;
+const int buzPin = 21;
+const int cameraPin = 26;
 
 File packet_csv;
 File backup_txt;
@@ -208,10 +210,8 @@ void setup() {
   pinMode(A5, INPUT);
 
   // Camera set up
-  // TODO
+  pinMode(cameraPin, OUTPUT);
 }
-
-
 
 
 ///////////////////////////////////// HELPER FUNCTIONS /////////////////////////////////////
@@ -365,7 +365,23 @@ void flagDeploy() {
   pinMode(A5, LOW);
 }
 
+void startRecording() {
+  Serial.println("Recording...");
+  digitalWrite(cameraPin, LOW); 
+  delay(1000);
+  digitalWrite(cameraPin, HIGH);
+  Serial.println("Recording started.");
+}
 
+void stopRecording() {
+  Serial.println("Stopping the recording...");
+  digitalWrite(cameraPin, LOW);
+  delay(1000);
+  digitalWrite(cameraPin, HIGH);
+  delay(10);
+  digitalWrite(cameraPin, LOW);
+  Serial.println("Recording stopped.");
+}
 
 
 ///////////////////////////////////// COMMAND READING /////////////////////////////////////
@@ -655,6 +671,7 @@ void loop() {
       flightState = "ASCENDING";
     }
     else if (flightState == "ASCENDING" && altitude - last_alt < 0){
+      startRecording();
       flightState = "DESCENDING";
     }
     else if (flightState == "DESCENDING" && altitude <= 500){
@@ -667,7 +684,7 @@ void loop() {
     }
     else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1 && chuteReleased){
       upright();
-      delay(3000);
+      stopRecording();
       flagDeploy();
     }
     else if (flightState == "LANDED"){
