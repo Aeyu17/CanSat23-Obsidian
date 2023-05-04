@@ -1,32 +1,41 @@
-const int trig = 36;
+const int trig = 33;
 const int led = LED_BUILTIN;
 
-void setup() {                
-  // initialize the digital pins as output.
-  Serial.begin(115200);
 
-  Serial.println("Setting the pin mode...");
-  pinMode(led, OUTPUT);
-  pinMode(trig, OUTPUT);   
+void setup() {     
+  Serial.begin(115200); 
 
-  Serial.println("Writing to high...");   
-  digitalWrite(led, HIGH);  
-  digitalWrite(trig, LOW); 
-}
-
-// Hold HIGH and trigger quick (<250ms) LOW to take a photo. Holding LOW and trigger HIGH starts/stops video recording
-
-void loop() {
-  Serial.println("Taking a picture!");
-  digitalWrite(trig, LOW);   
-  digitalWrite(led, LOW);
+  delay(500);
   
-  delay(50);               
+  if (Serial)
+  {
+    Serial.println("WORKING");
+  }
+  
+  // initialize the digital pins as output.
+  pinMode(led, OUTPUT);
+  pinMode(trig, OUTPUT);         
 
-  digitalWrite(trig, HIGH);    
-  digitalWrite(led, HIGH);   
-  Serial.println("Took a picture!");
-  Serial.println("Waiting to take another picture...");
+  digitalWrite(led, HIGH);
+  digitalWrite(trig, LOW); 
 
-  delay(10000);  
+  Serial.println("MADE IT HERE");
+
+  delay(1000);
+
+  // start recording
+  Serial.println("Recording...");
+  digitalWrite(trig, HIGH);
+  delay(10);
+  digitalWrite(trig, LOW);
+  
+  delay(10000);
+
+  Serial.println("HIGH");
+  digitalWrite(trig, HIGH);
+  delay(10);
+  Serial.println("LOW");
+  digitalWrite(trig, LOW);
 }
+
+void loop(){;}

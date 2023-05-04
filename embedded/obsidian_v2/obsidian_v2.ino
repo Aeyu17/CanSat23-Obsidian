@@ -41,7 +41,7 @@ float voltage;
 String missionTime = "00:00:00";
 int packetCount = 0;
 char flightMode = 'F';
-String flightState = "IDLE"; // ONLY FOR DEBUG PURPOSES IF SHIT GOES WRONG ITS HERE BOZO
+String flightState = "READY"; // READY IF TESTING ON ITS OWN, IDLE IF TESTING XBEES
 char hs_deployed = 'N';
 char pc_deployed = 'N';
 char mast_raised = 'N';
@@ -116,7 +116,7 @@ void setup() {
     longitude = -999;
     gps_altitude = -999;
     siv = -999;
-    gps_time = "L";
+    gps_time = "99:99:99";
     gps_hour = "99";
     gps_min = "99";
     gps_sec = "99";
@@ -158,30 +158,24 @@ void setup() {
       backup_txt.seek(0);
       String readFile = backup_txt.readStringUntil('\n');
 
-      startHour = itemAt(readFile,0).toInt();
-      startMinute = itemAt(readFile,1).toInt();
-      startSecond = itemAt(readFile,2).toInt();
-      alt_offset = itemAt(readFile,3).toInt();
-      packetCount = itemAt(readFile,4).toInt();
-      flightMode = itemAt(readFile,5).charAt(0); 
-      flightState = itemAt(readFile,6);
-      hs_deployed = itemAt(readFile,7).charAt(0);
-      pc_deployed = itemAt(readFile,8).charAt(0);
-      mast_raised = itemAt(readFile,9).charAt(0);
-      containerReleased = (itemAt(readFile, 10) == 1);
-      shieldDeployed = (itemAt(readFile, 11) == 1);
-      chuteReleased = (itemAt(readFile, 12) == 1);
-      flagRaised = (itemAt(readFile, 13) == 1);
-      cmdecho = itemAt(readFile,14);
+      alt_offset = itemAt(readFile,0).toInt();
+      packetCount = itemAt(readFile,1).toInt();
+      flightMode = itemAt(readFile,2).charAt(0); 
+      flightState = itemAt(readFile,3);
+      hs_deployed = itemAt(readFile,4).charAt(0);
+      pc_deployed = itemAt(readFile,5).charAt(0);
+      mast_raised = itemAt(readFile,6).charAt(0);
+      containerReleased = (itemAt(readFile, 7).equals("1"));
+      shieldDeployed = (itemAt(readFile, 8).equals("1"));
+      chuteReleased = (itemAt(readFile, 9).equals("1"));
+      flagRaised = (itemAt(readFile, 10).equals("1"));
+      cmdecho = itemAt(readFile,11);
 
     } else {
       // SET UP BACKUP TXT
       backup_txt.close(); // do we need this?
       backup_txt = SD.open("/reset.txt", FILE_WRITE);
-      String resetPacket = String(startHour) + "," + 
-                           String(startMinute) + "," +
-                           String(startSecond) + "," +
-                           String(alt_offset) + "," + 
+      String resetPacket = String(alt_offset) + "," + 
                            String(packetCount) + "," + 
                            String(flightMode) + "," + 
                            String(flightState) + "," + 
@@ -196,7 +190,7 @@ void setup() {
       writeToFile(resetPacket, backup_txt); 
       backup_txt.close();
     }
-    packet_csv = SD.open("/testlaunchdata.csv", FILE_WRITE);
+    packet_csv = SD.open("/testlaunchdata.csv", FILE_APPEND);
     if (!packet_csv){
       Serial.println("SD CSV DID NOT OPEN PROPERLY");
     } else {
@@ -376,8 +370,8 @@ void flagDeploy() {
 
 ///////////////////////////////////// COMMAND READING /////////////////////////////////////
 void readcommands(){
-  if (Serial.available()){
-    String packet = Serial.readString();
+  if (Serial1.available()){
+    String packet = Serial1.readString();
     if (itemAt(packet, 0) == "CMD" && itemAt(packet, 1) == "1070"){
       String cmd = itemAt(packet, 2);
       String cmdarg = itemAt(packet, 3);
@@ -632,10 +626,7 @@ void loop() {
     packet_csv = SD.open("/testlaunchdata.csv", FILE_APPEND);
     backup_txt = SD.open("/reset.txt", FILE_WRITE);
 
-    String resetPacket = String(startHour) + "," + 
-                         String(startMinute) + "," +
-                         String(startSecond) + "," +
-                         String(alt_offset) + "," + 
+    String resetPacket = String(alt_offset) + "," + 
                          String(packetCount) + "," + 
                          String(flightMode) + "," + 
                          String(flightState) + "," + 
@@ -693,5 +684,6 @@ void loop() {
     packet_csv.close();
   }
 
+  buzzer();
   ledBlink(); // make sure this stays at the end of the loop
 }
