@@ -67,6 +67,7 @@ int hServoPin = 14;
 int buzPin = 21;
 
 File packet_csv;
+File backup_txt;
 Servo release_servo;
 Servo flag_servo;
 Servo hs_servo;
@@ -88,9 +89,7 @@ void setup() {
     pressure = -999;
     alt_offset = -999;
     last_alt = -999;
-  }
-
-  if (bmpWorking) {
+  } else {
     Serial.println("BMP WORKING");
     bmp.setTemperatureOversampling(BMP3_OVERSAMPLING_8X);
     bmp.setPressureOversampling(BMP3_OVERSAMPLING_4X);
@@ -121,10 +120,7 @@ void setup() {
     gps_hour = "99";
     gps_min = "99";
     gps_sec = "99";
-  }
-  // myGNSS.enableDebugging(); // in case of error
-  
-  if (samWorking){
+  } else {
     Serial.println("SAM WORKING");
     myGNSS.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
     myGNSS.saveConfigSelective(VAL_CFG_SUBSEC_IOPORT); //Save (only) the communications port settings to flash and BBR
@@ -132,6 +128,8 @@ void setup() {
     startHour = myGNSS.getHour();
     startMinute = myGNSS.getMinute();
     startSecond = myGNSS.getSecond();
+
+    // myGNSS.enableDebugging(); // in case of error
   }
   
   // BNO set up
@@ -141,9 +139,7 @@ void setup() {
     bnoWorking = false;
     tiltx = -999;
     tilty = -999;
-  }
-  
-  if (bnoWorking) {
+  } else {
     Serial.println("BNO WORKING");
     bno.setExtCrystalUse(true);
   }
@@ -153,14 +149,58 @@ void setup() {
     Serial.println("SD NOT WORKING");
 
     sdWorking = false;
-  }
-
-  if (sdWorking){
+  } else {
     Serial.println("SD WORKING");
-    SD.remove("/testlaunchdata.csv");
+    backup_txt = SD.open("/reset.txt", FILE_READ);
+
+    if (backup_txt) {
+      // RESTORE TXT VALUES HERE
+      backup_txt.seek(0);
+      String readFile = backup_txt.readStringUntil('\n');
+
+      startHour = itemAt(readFile,0).toInt();
+      startMinute = itemAt(readFile,1).toInt();
+      startSecond = itemAt(readFile,2).toInt();
+      alt_offset = itemAt(readFile,3).toInt();
+      packetCount = itemAt(readFile,4).toInt();
+      flightMode = itemAt(readFile,5).charAt(0); 
+      flightState = itemAt(readFile,6);
+      hs_deployed = itemAt(readFile,7).charAt(0);
+      pc_deployed = itemAt(readFile,8).charAt(0);
+      mast_raised = itemAt(readFile,9).charAt(0);
+      containerReleased = (itemAt(readFile, 10) == 1);
+      shieldDeployed = (itemAt(readFile, 11) == 1);
+      chuteReleased = (itemAt(readFile, 12) == 1);
+      flagRaised = (itemAt(readFile, 13) == 1);
+      cmdecho = itemAt(readFile,14);
+
+    } else {
+      // SET UP BACKUP TXT
+      backup_txt.close(); // do we need this?
+      backup_txt = SD.open("/reset.txt", FILE_WRITE);
+      String resetPacket = String(startHour) + "," + 
+                           String(startMinute) + "," +
+                           String(startSecond) + "," +
+                           String(alt_offset) + "," + 
+                           String(packetCount) + "," + 
+                           String(flightMode) + "," + 
+                           String(flightState) + "," + 
+                           String(hs_deployed) + "," + 
+                           String(pc_deployed) + "," + 
+                           String(mast_raised) + "," + 
+                           String(containerReleased) + "," +
+                           String(shieldDeployed) + "," +
+                           String(chuteReleased) + "," + 
+                           String(flagRaised) + "," +
+                           String(cmdecho) + "\n";
+      writeToFile(resetPacket, backup_txt); 
+      backup_txt.close();
+    }
     packet_csv = SD.open("/testlaunchdata.csv", FILE_WRITE);
     if (!packet_csv){
       Serial.println("SD CSV DID NOT OPEN PROPERLY");
+    } else {
+      writeToFile("TEAM_ID,MISSION_TIME,PACKET_COUNT,MODE,STATE,ALTITUDE,HS_DEPLOYED,PC_DEPLOYED,MAST_RAISED,TEMPERATURE,VOLTAGE,PRESSURE,GPS_TIME,GPS_ALTITUDE,GPS_LATITUDE,GPS_LONGITUDE,GPS_SATS,TILT_X,TILT_Y,CMD_ECHO", packet_csv);
     }
     packet_csv.close();
   }
@@ -174,8 +214,7 @@ void setup() {
   pinMode(A5, INPUT);
 
   // Camera set up
-  pinMode(A4, INPUT);
-  pinMode(A4, HIGH);
+  // TODO
 }
 
 
@@ -210,7 +249,6 @@ void ledBlink(){
   pinMode(ledPin,HIGH);
   delay(100);
   pinMode(ledPin,LOW);
-  delay(100);
 }
 
 // buzzer setup
@@ -218,9 +256,8 @@ void buzzer(){
   pinMode(buzPin, OUTPUT);
 
   pinMode(buzPin,HIGH);
-  delay(500);
+  delay(100);
   pinMode(buzPin,LOW);
-  delay(500);
 }
 
 float setDefaultAlt(){
@@ -348,16 +385,13 @@ void readcommands(){
         if (cmdarg == "ON"){
           cmdecho = "CXON";
           flightState = "READY";
-        }
-        else if (cmdarg == "OFF"){
+        } else if (cmdarg == "OFF"){
           cmdecho = "CXOFF";
           flightState = "IDLE";
-        }
-        else {
+        } else {
           Serial.println("Invalid command received.");
         }
-      }
-      else if (cmd == "ST"){
+      } else if (cmd == "ST"){
         if (cmdarg == "GPS") {
           cmdecho = "STGPS";
           
@@ -377,19 +411,18 @@ void readcommands(){
           startMinute = gps_min.toInt() - dminutes;
           startSecond = gps_sec.toInt() - dseconds;
 
-          if (startSecond < 0){
+          while (startSecond < 0){
             startSecond += 60;
             startMinute--;
           }
-          if (startMinute < 0){
+          while (startMinute < 0){
             startMinute += 60;
             startHour--;
           }
-          if (startHour < 0){
+          while (startHour < 0){
             startHour += 24;
           }          
-        }
-        else {
+        } else {
           cmdecho = "STCUS";
           // hh:mm:ss
           int newhour = cmdarg.substring(0, 2).toInt();
@@ -420,28 +453,24 @@ void readcommands(){
             startHour += 24;
           } 
         }
-      }
-      else if (cmd == "SIM"){
+      } else if (cmd == "SIM"){
         if (cmdarg = "ENABLE") {
           cmdecho = "SIME";
           
-        }
-        else if (cmdarg = "DISABLE") {
+        } else if (cmdarg = "DISABLE") {
           cmdecho = "SIMD";
           
-        }
-        else if (cmdarg = "ACTIVATE") {
+        } else if (cmdarg = "ACTIVATE") {
           cmdecho = "SIMA";
           
-        }
-        else {
+        } else {
           Serial.println("Invalid command received.");
         }
-      }
-      else if (cmd == "SIMP"){
+      } else if (cmd == "SIMP"){
         cmdecho = "SIMP";
-      }
-      else if (cmd == "CAL"){
+        // TODO
+
+      } else if (cmd == "CAL"){
         cmdecho = "CAL";
         
         float number1 = bmp.readAltitude(SEALEVELPRESSURE_HPA);
@@ -451,34 +480,34 @@ void readcommands(){
         float number5 = bmp.readAltitude(SEALEVELPRESSURE_HPA);;
         
         alt_offset = (number1 + number2 + number3 + number4 + number5)/5;
-      }
-      else if (cmd == "ACT"){
+      } else if (cmd == "ACT"){
         if (cmdarg == "MR") {
           cmdecho = "ACTMR";
           containerReleased = false;
           containerRelease();
-        }
-        else if (cmdarg == "HS") {
+        } else if (cmdarg == "HS") {
           cmdecho = "ACTHS";
           shieldDeploy();
-        }
-        else if (cmdarg == "PC") {
+        } else if (cmdarg == "PC") {
           cmdecho = "ACTPC";
           chuteRelease();
-        }
-        else if (cmdarg == "AB") {
+        } else if (cmdarg == "AB") {
           cmdecho = "ACTAB";
           buzzer();
-        }
-        else if (cmdarg == "LED") {
+        } else if (cmdarg == "LED") {
           cmdecho = "ACTLED";
           ledBlink();
-        }
-        else {
+        } else {
           Serial.println("Invalid command received.");
         }
-      }
-      else {
+      } else if (cmd == "RESREL") {
+        cmdecho = "RESREL";
+        release_servo.write(180);
+        flag_servo.write(0);
+        // adam give us the degrees thanks
+        // hs_servo.write();
+
+      } else {
         Serial.println("Invalid command received.");
       }
     }
@@ -601,6 +630,26 @@ void loop() {
  
   if (sdWorking){
     packet_csv = SD.open("/testlaunchdata.csv", FILE_APPEND);
+    backup_txt = SD.open("/reset.txt", FILE_WRITE);
+
+    String resetPacket = String(startHour) + "," + 
+                         String(startMinute) + "," +
+                         String(startSecond) + "," +
+                         String(alt_offset) + "," + 
+                         String(packetCount) + "," + 
+                         String(flightMode) + "," + 
+                         String(flightState) + "," + 
+                         String(hs_deployed) + "," + 
+                         String(pc_deployed) + "," + 
+                         String(mast_raised) + "," + 
+                         String(containerReleased) + "," +
+                         String(shieldDeployed) + "," +
+                         String(chuteReleased) + "," + 
+                         String(flagRaised) + "," +
+                         String(cmdecho) + '\n';
+                         
+    writeToFile(resetPacket, backup_txt); 
+    backup_txt.close();
   }
   
   if (flightState != "IDLE") {
