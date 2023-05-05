@@ -29,48 +29,49 @@ void setup() {
 }
 
 void loop() {
-  raiseFlag();
-  delay(delayTime);
-  lowerFlag();
-  delay(delayTime);
+  // raiseFlag();
+  // delay(delayTime);
+  // lowerFlag();
+  // delay(delayTime);
 
-  releaseContainer();
-  delay(delayTime);
-  releaseParachute();
-  delay(delayTime);
-  resetRelease();
-  delay(delayTime);
+  // releaseContainer();
+  // delay(delayTime);
+  // releaseParachute();
+  // delay(delayTime);
+  // resetRelease();
+  // delay(delayTime);
 
   Serial.println("Going to Pos 1, opening");
   openPanels();
   delay(delayTime);
-  Serial.println("Going to Pos 0, closing"); 
-  closePanels();
-  delay(delayTime);
-  Serial.println("Going to Pos 2, opening");
-  upright();
-  delay(delayTime);
-  Serial.println("Going to Pos 0, closing");
-  closePanels();
-  delay(delayTime);
-  Serial.println("Going to Pos 1, opening");
-  openPanels();
-  delay(delayTime);
-  Serial.println("Going to Pos 2, opening");
-  upright();
-  delay(delayTime);
-  Serial.println("Going to Pos 0, closing");
-  closePanels();
-  delay(delayTime + delayTime);
+  // Serial.println("Going to Pos 0, closing"); 
+  // closePanels();
+  // delay(delayTime);
+  // Serial.println("Going to Pos 2, opening");
+  // upright();
+  // delay(delayTime);
+  // Serial.println("Going to Pos 0, closing");
+  // closePanels();
+  // delay(delayTime);
+  panelPosition = 0;
+  // Serial.println("Going to Pos 1, opening");
+  // openPanels();
+  // delay(delayTime);
+  // Serial.println("Going to Pos 2, opening");
+  // upright();
+  // delay(delayTime);
+  // Serial.println("Going to Pos 0, closing");
+  // closePanels();
+  // delay(delayTime + delayTime);
 
-  raiseFlag();
-  delay(delayTime);
-  releaseParachute();
-  delay(delayTime);
-  upright();
-  delay(delayTime);
-  resetMechanisms();
-  delay(delayTime);
+  // raiseFlag();
+  // delay(delayTime);
+  // releaseParachute();
+  // delay(delayTime);
+  // upright();
+  // delay(delayTime);
+  // resetMechanisms();
+  // delay(delayTime);
   
 }
 
@@ -135,7 +136,7 @@ void closePanels() {
 
     case 2:
     panelServo.write(50);
-    delay(14000);
+    delay(18000);
     panelServo.write(93);
     break;
 
@@ -153,7 +154,7 @@ void upright() {
   switch (panelPosition) {
     case 0:
     panelServo.write(130);
-    delay(6000);
+    delay(25000);
     panelServo.write(93);
     break;
 

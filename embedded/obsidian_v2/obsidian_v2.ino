@@ -41,7 +41,7 @@ float voltage;
 String missionTime = "00:00:00";
 int packetCount = 0;
 char flightMode = 'F';
-String flightState = "READY"; // READY IF TESTING ON ITS OWN, IDLE IF TESTING XBEES
+String flightState = "IDLE"; // READY IF TESTING ON ITS OWN, IDLE IF TESTING XBEES
 char hs_deployed = 'N';
 char pc_deployed = 'N';
 char mast_raised = 'N';
@@ -59,20 +59,22 @@ bool bmpWorking = true;
 bool bnoWorking = true;
 bool samWorking = true;
 bool sdWorking = true;
+int panelPosition = 0;
 
 // Pins
 const int ledPin = 27;
 const int rServoPin = 32;
 const int fServoPin = 15;
-const int hServoPin = 14;
+const int pServoPin = 14;
+const int mosfetPin = 27;
 const int buzPin = 21;
 const int cameraPin = 26;
 
 File packet_csv;
 File backup_txt;
-Servo release_servo;
-Servo flag_servo;
-Servo hs_servo;
+Servo releaseServo;
+Servo flagServo;
+Servo panelServo;
 
 
 ///////////////////////////////////// SETUP /////////////////////////////////////
@@ -171,7 +173,8 @@ void setup() {
       shieldDeployed = (itemAt(readFile, 8).equals("1"));
       chuteReleased = (itemAt(readFile, 9).equals("1"));
       flagRaised = (itemAt(readFile, 10).equals("1"));
-      cmdecho = itemAt(readFile,11);
+      cmdecho = itemAt(readFile, 11);
+      panelPosition = itemAt(readFile, 12).toInt();
 
     } else {
       // SET UP BACKUP TXT
@@ -188,7 +191,8 @@ void setup() {
                            String(shieldDeployed) + "," +
                            String(chuteReleased) + "," + 
                            String(flagRaised) + "," +
-                           String(cmdecho) + "\n";
+                           String(cmdecho) + "," +
+                           String(panelPosition) + "\n";
       writeToFile(resetPacket, backup_txt); 
       backup_txt.close();
     }
@@ -196,18 +200,18 @@ void setup() {
     if (!packet_csv){
       Serial.println("SD CSV DID NOT OPEN PROPERLY");
     } else {
-      writeToFile("TEAM_ID,MISSION_TIME,PACKET_COUNT,MODE,STATE,ALTITUDE,HS_DEPLOYED,PC_DEPLOYED,MAST_RAISED,TEMPERATURE,VOLTAGE,PRESSURE,GPS_TIME,GPS_ALTITUDE,GPS_LATITUDE,GPS_LONGITUDE,GPS_SATS,TILT_X,TILT_Y,CMD_ECHO", packet_csv);
+      writeToFile("TEAM_ID,MISSION_TIME,PACKET_COUNT,MODE,STATE,ALTITUDE,HS_DEPLOYED,PC_DEPLOYED,MAST_RAISED,TEMPERATURE,VOLTAGE,PRESSURE,GPS_TIME,GPS_ALTITUDE,GPS_LATITUDE,GPS_LONGITUDE,GPS_SATS,TILT_X,TILT_Y,CMD_ECHO\n", packet_csv);
     }
     packet_csv.close();
   }
   
   // Servo set up
-  release_servo.attach(rServoPin); // may need to change
-  hs_servo.attach(hServoPin); // need to change
-  flag_servo.attach(fServoPin); // need to change
+  releaseServo.attach(rServoPin); // may need to change
+  panelServo.attach(pServoPin); // need to change
+  flagServo.attach(fServoPin); // need to change
 
   // MOSFET set up
-  pinMode(A5, INPUT);
+  pinMode(mosfetPin, OUTPUT);
 
   // Camera set up
   pinMode(cameraPin, OUTPUT);
@@ -294,75 +298,137 @@ void debugPrintData(){
   Serial.println("-------------------------");
 }
 
-
-
-
 ///////////////////////////////////// RELEASE MECHANISMS /////////////////////////////////////
-// initial rocket release
-void containerRelease() {
-  if (containerReleased){
-    return;
-  }
-  pinMode(A5, HIGH);
-  containerReleased = true;
-  release_servo.write(90);
-  pinMode(A5, LOW);
+void raiseFlag() {
+  Serial.println("Raising the flag...");
+  digitalWrite(mosfetPin, HIGH);
+  delay(500);
+  flagServo.write(180);
+  digitalWrite(mosfetPin, LOW);
 }
 
-
-// first shield deploy
-void shieldDeploy() {
-  if (shieldDeployed){
-    return;
-  }
-  pinMode(A5, HIGH);
-  shieldDeployed = true;
-  hs_deployed = 'P';
-  flightState = "HSDEPLOYED";
-  hs_servo.write(2400); // don't know this number yet
-  pinMode(A5, LOW);
+void lowerFlag() {
+  Serial.println("Lowering the flag...");
+  digitalWrite(mosfetPin, HIGH);
+  delay(500);
+  flagServo.write(0);
+  digitalWrite(mosfetPin, LOW);
 }
 
-void shieldRetract() {
-  if (!shieldDeployed){
-    return;
-  }
-  pinMode(A5, HIGH);
-  shieldDeployed = false;
-  hs_servo.write(1700); // fuck???
-  pinMode(A5, LOW);
+void releaseContainer() {
+  Serial.println("Releasing from the container...");
+  digitalWrite(mosfetPin, HIGH);
+  delay(500);
+  releaseServo.write(90);
+  digitalWrite(mosfetPin, LOW);
 }
 
-// parachute release
-void chuteRelease() {
-  if (chuteReleased){
-    return;
-  }
-  pinMode(A5, HIGH);
-  chuteReleased = true;
-  pc_deployed = 'C';
-  flightState = "PCDEPLOYED";
-  release_servo.write(0);
-  pinMode(A5, LOW);
+void releaseParachute() {
+  Serial.println("Releasing the parachute...");
+  digitalWrite(mosfetPin, HIGH);
+  delay(500);
+  releaseServo.write(180);
+  digitalWrite(mosfetPin, LOW);
 }
 
+void resetRelease() {
+  Serial.println("Resetting the release mechanism...");
+  digitalWrite(mosfetPin, HIGH);
+  delay(500);
+  releaseServo.write(0);
+  digitalWrite(mosfetPin, LOW);
+}
 
-// second shield deploy
+// 130 closes, 50 opens, 93 stops
+void openPanels() {
+  Serial.println("Opening the heat shield...");
+  digitalWrite(mosfetPin, HIGH);
+  delay(500);
+  switch (panelPosition) {
+    case 0:
+    panelServo.write(130);
+    delay(8000);
+    panelServo.write(93);
+    break;
+    
+    case 2:
+    panelServo.write(50);
+    delay(6000);
+    panelServo.write(93);
+    break;
+
+    case 1:
+    default:
+    Serial.println("The heat shield is already in position 1.");
+    break;
+  }
+  panelPosition = 1;
+  Serial.println("The heat shield is open.");
+  digitalWrite(mosfetPin, LOW);
+}
+
+void closePanels() {
+  Serial.println("Closing the heat shield...");
+  digitalWrite(mosfetPin, HIGH);
+  delay(500);
+  switch (panelPosition) {
+    case 1:
+    panelServo.write(50);
+    delay(8000);
+    panelServo.write(93);
+    break;
+
+    case 2:
+    panelServo.write(50);
+    delay(14000);
+    panelServo.write(93);
+    break;
+
+    case 0:
+    default:
+    Serial.println("The panels are already closed!");
+    break;
+  }
+  panelPosition = 0;
+  Serial.println("The heat shield is closed.");
+  digitalWrite(mosfetPin, LOW);
+}
+
 void upright() {
-  pinMode(A5, HIGH);
-  hs_servo.write(180); // don't know this number yet
-  flightState = "LANDED";
-  shieldDeployed = true;
-  pinMode(A5, LOW);
+  Serial.println("Opening the heat shield...");
+  digitalWrite(mosfetPin, HIGH);
+  delay(500);
+  switch (panelPosition) {
+    case 0:
+    panelServo.write(130);
+    delay(6000);
+    panelServo.write(93);
+    break;
+
+    case 1:
+    panelServo.write(130);
+    delay(14000);
+    panelServo.write(93);
+    break;
+
+    case 2:
+    default:
+    Serial.println("The panels have already uprighted!");
+    break;
+  }
+  panelPosition = 2;
+  Serial.println("The heat shield is open.");
+  digitalWrite(mosfetPin, LOW);
 }
 
-// flag delpy
-void flagDeploy() {
-  pinMode(A5, HIGH);
-  mast_raised = 'M';
-  flagRaised = true;
-  flag_servo.write(180); // don't know this number yet
-  pinMode(A5, LOW);
+void resetMechanisms() {
+  Serial.println("Resetting the mechanisms...");
+  closePanels();
+
+  resetRelease();
+
+  lowerFlag();
+  Serial.println("All mechanisms are reset.");
 }
 
 void startRecording() {
@@ -392,17 +458,20 @@ void readcommands(){
       String cmd = itemAt(packet, 2);
       String cmdarg = itemAt(packet, 3);
       if (cmd == "CX"){
-        if (cmdarg == "ON"){
+        if (cmdarg == "ON\n"){
+          Serial.println("CXON");
           cmdecho = "CXON";
           flightState = "READY";
-        } else if (cmdarg == "OFF"){
+        } else if (cmdarg == "OFF\n"){
+          Serial.println("CXOFF");
           cmdecho = "CXOFF";
           flightState = "IDLE";
         } else {
           Serial.println("Invalid command received.");
         }
       } else if (cmd == "ST"){
-        if (cmdarg == "GPS") {
+        if (cmdarg == "GPS\n") {
+          Serial.println("STGPS");
           cmdecho = "STGPS";
           
           gps_hour = myGNSS.getHour();
@@ -433,6 +502,7 @@ void readcommands(){
             startHour += 24;
           }          
         } else {
+          Serial.println("STCUS");
           cmdecho = "STCUS";
           // hh:mm:ss
           int newhour = cmdarg.substring(0, 2).toInt();
@@ -464,23 +534,28 @@ void readcommands(){
           } 
         }
       } else if (cmd == "SIM"){
-        if (cmdarg = "ENABLE") {
+        if (cmdarg = "ENABLE\n") {
+          Serial.println("SIME");
           cmdecho = "SIME";
           
-        } else if (cmdarg = "DISABLE") {
+        } else if (cmdarg = "DISABLE\n") {
+          Serial.println("SIMD");
           cmdecho = "SIMD";
           
-        } else if (cmdarg = "ACTIVATE") {
+        } else if (cmdarg = "ACTIVATE\n") {
+          Serial.println("SIMA");
           cmdecho = "SIMA";
           
         } else {
           Serial.println("Invalid command received.");
         }
-      } else if (cmd == "SIMP"){
+      } else if (cmd == "SIMP\n"){
+        Serial.println("SIMP");
         cmdecho = "SIMP";
         // TODO
 
-      } else if (cmd == "CAL"){
+      } else if (cmd == "CAL\n"){
+        Serial.println("CAL");
         cmdecho = "CAL";
         
         float number1 = bmp.readAltitude(SEALEVELPRESSURE_HPA);
@@ -491,31 +566,34 @@ void readcommands(){
         
         alt_offset = (number1 + number2 + number3 + number4 + number5)/5;
       } else if (cmd == "ACT"){
-        if (cmdarg == "MR") {
+        if (cmdarg == "MR\n") {
+          Serial.println("ACTMR");
           cmdecho = "ACTMR";
           containerReleased = false;
-          containerRelease();
-        } else if (cmdarg == "HS") {
+          releaseContainer();
+        } else if (cmdarg == "HS\n") {
+          Serial.println("ACTHS");
           cmdecho = "ACTHS";
-          shieldDeploy();
-        } else if (cmdarg == "PC") {
+          upright();
+        } else if (cmdarg == "PC\n") {
+          Serial.println("ACTPC");
           cmdecho = "ACTPC";
-          chuteRelease();
-        } else if (cmdarg == "AB") {
+          releaseParachute();
+        } else if (cmdarg == "AB\n") {
+          Serial.println("ACTAB");
           cmdecho = "ACTAB";
           buzzer();
-        } else if (cmdarg == "LED") {
+        } else if (cmdarg == "LED\n") {
+          Serial.println("ACTLED");
           cmdecho = "ACTLED";
           ledBlink();
         } else {
           Serial.println("Invalid command received.");
         }
-      } else if (cmd == "RESREL") {
+      } else if (cmd == "RESREL\n") {
+        Serial.println("RESREL");
         cmdecho = "RESREL";
-        release_servo.write(180);
-        flag_servo.write(0);
-        // adam give us the degrees thanks
-        // hs_servo.write();
+        resetMechanisms();
 
       } else {
         Serial.println("Invalid command received.");
@@ -653,7 +731,8 @@ void loop() {
                          String(shieldDeployed) + "," +
                          String(chuteReleased) + "," + 
                          String(flagRaised) + "," +
-                         String(cmdecho) + '\n';
+                         String(cmdecho) + "," + 
+                         String(panelPosition) + '\n';
                          
     writeToFile(resetPacket, backup_txt); 
     backup_txt.close();
@@ -663,6 +742,7 @@ void loop() {
     String packet = packetGenerator();
     if (sdWorking){
       writeToFile(packet, packet_csv);
+
     }
     Serial1.print(packet);
     debugPrintData();
@@ -675,17 +755,17 @@ void loop() {
       flightState = "DESCENDING";
     }
     else if (flightState == "DESCENDING" && altitude <= 500){
-      containerRelease();
-      shieldDeploy();
+      releaseContainer();
+      openPanels();
     }
     else if (flightState == "HSDEPLOYED" && shieldDeployed && altitude <= 200){
-      shieldRetract();
-      chuteRelease();
+      closePanels();
+      releaseParachute();
     }
     else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1 && chuteReleased){
       upright();
       stopRecording();
-      flagDeploy();
+      raiseFlag();
     }
     else if (flightState == "LANDED"){
       buzzer();
@@ -701,6 +781,5 @@ void loop() {
     packet_csv.close();
   }
 
-  buzzer();
   ledBlink(); // make sure this stays at the end of the loop
 }
