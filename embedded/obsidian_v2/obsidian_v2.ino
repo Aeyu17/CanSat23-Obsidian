@@ -5,7 +5,7 @@
 #include <Adafruit_BNO055.h>
 #include <utility/imumaths.h>
 #include <SD.h>
-#include <ESP32Servo.h>
+#include <Servo.h>
 
 #define SEALEVELPRESSURE_HPA (1013.25) // predefined by BMP, change as needed
 
