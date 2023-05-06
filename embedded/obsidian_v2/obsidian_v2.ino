@@ -46,15 +46,11 @@ char hs_deployed = 'N';
 char pc_deployed = 'N';
 char mast_raised = 'N';
 String cmdecho = "NONE";
-
-// Internal for Reset
 int startHour;
 int startMinute;
 int startSecond;
-// bool containerReleased;
-// bool shieldDeployed;
-// bool chuteReleased;
-// bool flagRaised;
+
+// Internal for Reset
 bool bmpWorking = true;
 bool bnoWorking = true;
 bool samWorking = true;
@@ -451,6 +447,7 @@ void readcommands(){
     if (itemAt(packet, 0) == "CMD" && itemAt(packet, 1) == "1070"){
       String cmd = itemAt(packet, 2);
       String cmdarg = itemAt(packet, 3);
+
       if (cmd == "CX"){
         if (cmdarg == "ON\n"){
           Serial.println("CXON");
@@ -463,6 +460,7 @@ void readcommands(){
         } else {
           Serial.println("Invalid command received.");
         }
+
       } else if (cmd == "ST"){
         if (cmdarg == "GPS\n") {
           Serial.println("STGPS");
@@ -527,6 +525,7 @@ void readcommands(){
             startHour += 24;
           } 
         }
+
       } else if (cmd == "SIM"){
         if (cmdarg = "ENABLE\n") {
           Serial.println("SIME");
@@ -559,11 +558,11 @@ void readcommands(){
         float number5 = bmp.readAltitude(SEALEVELPRESSURE_HPA);;
         
         alt_offset = (number1 + number2 + number3 + number4 + number5)/5;
+
       } else if (cmd == "ACT"){
         if (cmdarg == "MR\n") {
           Serial.println("ACTMR");
           cmdecho = "ACTMR";
-          containerReleased = false;
           releaseContainer();
         } else if (cmdarg == "HS\n") {
           Serial.println("ACTHS");
@@ -572,6 +571,7 @@ void readcommands(){
         } else if (cmdarg == "PC\n") {
           Serial.println("ACTPC");
           cmdecho = "ACTPC";
+          pc_deployed = 'C';
           releaseParachute();
         } else if (cmdarg == "AB\n") {
           Serial.println("ACTAB");
@@ -584,6 +584,7 @@ void readcommands(){
         } else {
           Serial.println("Invalid command received.");
         }
+
       } else if (cmd == "RESREL\n") {
         Serial.println("RESREL");
         cmdecho = "RESREL";
@@ -730,9 +731,9 @@ void loop() {
   
   if (flightState != "IDLE") {
     String packet = packetGenerator();
+
     if (sdWorking){
       writeToFile(packet, packet_csv);
-
     }
     Serial1.print(packet);
     debugPrintData();
