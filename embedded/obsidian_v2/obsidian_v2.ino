@@ -51,10 +51,10 @@ String cmdecho = "NONE";
 int startHour;
 int startMinute;
 int startSecond;
-bool containerReleased;
-bool shieldDeployed;
-bool chuteReleased;
-bool flagRaised;
+// bool containerReleased;
+// bool shieldDeployed;
+// bool chuteReleased;
+// bool flagRaised;
 bool bmpWorking = true;
 bool bnoWorking = true;
 bool samWorking = true;
@@ -62,7 +62,7 @@ bool sdWorking = true;
 int panelPosition = 0;
 
 // Pins
-const int ledPin = 27;
+const int ledPin = 12;
 const int rServoPin = 32;
 const int fServoPin = 15;
 const int pServoPin = 14;
@@ -169,12 +169,8 @@ void setup() {
       hs_deployed = itemAt(readFile,4).charAt(0);
       pc_deployed = itemAt(readFile,5).charAt(0);
       mast_raised = itemAt(readFile,6).charAt(0);
-      containerReleased = (itemAt(readFile, 7).equals("1"));
-      shieldDeployed = (itemAt(readFile, 8).equals("1"));
-      chuteReleased = (itemAt(readFile, 9).equals("1"));
-      flagRaised = (itemAt(readFile, 10).equals("1"));
-      cmdecho = itemAt(readFile, 11);
-      panelPosition = itemAt(readFile, 12).toInt();
+      cmdecho = itemAt(readFile, 7);
+      panelPosition = itemAt(readFile, 8).toInt();
 
     } else {
       // SET UP BACKUP TXT
@@ -187,10 +183,6 @@ void setup() {
                            String(hs_deployed) + "," + 
                            String(pc_deployed) + "," + 
                            String(mast_raised) + "," + 
-                           String(containerReleased) + "," +
-                           String(shieldDeployed) + "," +
-                           String(chuteReleased) + "," + 
-                           String(flagRaised) + "," +
                            String(cmdecho) + "," +
                            String(panelPosition) + "\n";
       writeToFile(resetPacket, backup_txt); 
@@ -200,21 +192,27 @@ void setup() {
     if (!packet_csv){
       Serial.println("SD CSV DID NOT OPEN PROPERLY");
     } else {
-      writeToFile("TEAM_ID,MISSION_TIME,PACKET_COUNT,MODE,STATE,ALTITUDE,HS_DEPLOYED,PC_DEPLOYED,MAST_RAISED,TEMPERATURE,VOLTAGE,PRESSURE,GPS_TIME,GPS_ALTITUDE,GPS_LATITUDE,GPS_LONGITUDE,GPS_SATS,TILT_X,TILT_Y,CMD_ECHO\n", packet_csv);
+      writeToFile("TEAM_ID,MISSION_TIME,PACKET_COUNT,MODE,STATE,ALTITUDE,HS_DEPLOYED,PC_DEPLOYED,MAST_RAISED,TEMPERATURE,PRESSURE,VOLTAGE,GPS_TIME,GPS_ALTITUDE,GPS_LATITUDE,GPS_LONGITUDE,GPS_SATS,TILT_X,TILT_Y,CMD_ECHO\n", packet_csv);
     }
     packet_csv.close();
   }
   
   // Servo set up
-  releaseServo.attach(rServoPin); // may need to change
-  panelServo.attach(pServoPin); // need to change
-  flagServo.attach(fServoPin); // need to change
+  releaseServo.attach(rServoPin);
+  panelServo.attach(pServoPin);
+  flagServo.attach(fServoPin);
 
   // MOSFET set up
   pinMode(mosfetPin, OUTPUT);
 
   // Camera set up
   pinMode(cameraPin, OUTPUT);
+
+  // LED set up
+  pinMode(ledPin,OUTPUT);
+
+  // Buzzer set up 
+  pinMode(buzPin, OUTPUT);
 }
 
 
@@ -238,24 +236,6 @@ void writeToFile(String packet, File file){
     file.write(sentData);
   }
   Serial.println("Wrote data to CSV.");
-}
-
-// led setup 
-void ledBlink(){
-  pinMode(ledPin,OUTPUT);
-
-  pinMode(ledPin,HIGH);
-  delay(100);
-  pinMode(ledPin,LOW);
-}
-
-// buzzer setup
-void buzzer(){
-  pinMode(buzPin, OUTPUT);
-
-  pinMode(buzPin,HIGH);
-  delay(100);
-  pinMode(buzPin,LOW);
 }
 
 float setDefaultAlt(){
@@ -449,6 +429,20 @@ void stopRecording() {
   Serial.println("Recording stopped.");
 }
 
+// led setup 
+void ledBlink(){
+  pinMode(ledPin,HIGH);
+  delay(100);
+  pinMode(ledPin,LOW);
+}
+
+// buzzer setup
+void buzzer(){
+  pinMode(buzPin,HIGH);
+  delay(100);
+  pinMode(buzPin,LOW);
+}
+
 
 ///////////////////////////////////// COMMAND READING /////////////////////////////////////
 void readcommands(){
@@ -633,8 +627,8 @@ void updateData() {
   if (bnoWorking) {
     sensors_event_t event;
     bno.getEvent(&event);
-    tiltx = -(float)event.orientation.y;
-    tilty = -(float)event.orientation.z;  
+    tiltx = 90 - (float)event.orientation.y;
+    tilty = 180 - (float)event.orientation.z;  
   }
 
   // ADC Voltage
@@ -727,10 +721,6 @@ void loop() {
                          String(hs_deployed) + "," + 
                          String(pc_deployed) + "," + 
                          String(mast_raised) + "," + 
-                         String(containerReleased) + "," +
-                         String(shieldDeployed) + "," +
-                         String(chuteReleased) + "," + 
-                         String(flagRaised) + "," +
                          String(cmdecho) + "," + 
                          String(panelPosition) + '\n';
                          
@@ -750,22 +740,29 @@ void loop() {
     if (flightState == "READY" && altitude >= 5){
       flightState = "ASCENDING";
     }
-    else if (flightState == "ASCENDING" && altitude - last_alt < 0){
+    else if (flightState == "ASCENDING" && altitude > 200 && altitude - last_alt < 0){
       startRecording();
       flightState = "DESCENDING";
     }
     else if (flightState == "DESCENDING" && altitude <= 500){
       releaseContainer();
       openPanels();
+      flightState = "HSDEPLOYED";
+      hs_deployed = 'P';
+
     }
-    else if (flightState == "HSDEPLOYED" && shieldDeployed && altitude <= 200){
+    else if (flightState == "HSDEPLOYED" && altitude <= 200){
       closePanels();
       releaseParachute();
+      flightState = "PCDEPLOYED";
+      pc_deployed = 'C';
     }
-    else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1 && chuteReleased){
+    else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1){
       upright();
       stopRecording();
       raiseFlag();
+      flightState = "LANDED";
+      mast_raised = 'M';
     }
     else if (flightState == "LANDED"){
       buzzer();

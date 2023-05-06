@@ -11,7 +11,7 @@ const int mosfetPin = 27;
 
 const int delayTime = 3000;
 
-int panelPosition = 0;
+int panelPosition = 2;
 
 // 50 is clockwise, closing
 // 93 is stop
@@ -41,19 +41,19 @@ void loop() {
   // resetRelease();
   // delay(delayTime);
 
-  Serial.println("Going to Pos 1, opening");
-  openPanels();
-  delay(delayTime);
-  // Serial.println("Going to Pos 0, closing"); 
-  // closePanels();
+  // Serial.println("Going to Pos 1, opening");
+  // openPanels();
   // delay(delayTime);
+  Serial.println("Going to Pos 0, closing"); 
+  closePanels();
+  delay(delayTime);
+  panelPosition = 2;
   // Serial.println("Going to Pos 2, opening");
   // upright();
   // delay(delayTime);
   // Serial.println("Going to Pos 0, closing");
   // closePanels();
   // delay(delayTime);
-  panelPosition = 0;
   // Serial.println("Going to Pos 1, opening");
   // openPanels();
   // delay(delayTime);

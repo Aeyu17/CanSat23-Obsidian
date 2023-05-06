@@ -110,7 +110,7 @@ void loop(void)
   Serial.print(F("Orientation: "));
   Serial.print((float)event.orientation.x);
   Serial.print(F(" "));
-  Serial.print((float)event.orientation.y);
+  Serial.print((float)90 - event.orientation.y);
   Serial.print(F(" "));
   Serial.print((float)event.orientation.z);
   Serial.println(F(""));

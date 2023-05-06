@@ -31,6 +31,7 @@ void setup()
       }
       i2c++;
     }
+    delay(1000);
   }
 }
 
