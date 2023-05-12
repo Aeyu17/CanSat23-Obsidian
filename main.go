@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 	"time"
+	"bufio"
 
 	backend "github.com/Aeyu17/CanSat23-Obsidian/backend"
 )
@@ -77,6 +78,17 @@ func main() {
 	defer backend.SerialPort.Close()
 
 	var packetChannel = make(chan string, 100)
+
+	go func(){
+		for {
+			if !backend.SerialConnected {
+				fmt.Println("Trying to reconnect the port...")
+				backend.SerialPort = backend.InitPort(backend.BAUD)
+				backend.SerialReader = bufio.NewReaderSize(backend.SerialPort, 1024)
+			}
+			time.Sleep(time.Second/2)
+		}
+	}()
 
 	go backend.PacketReceiver(packetChannel)
 	go backend.PacketEnqueuer(packetChannel, backend.PacketList)

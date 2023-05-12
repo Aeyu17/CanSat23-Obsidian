@@ -4,6 +4,7 @@ import (
 	"log"
 	"fmt"
 	"bufio"
+	"time"
 
 	"github.com/tarm/serial"
 	"go.bug.st/serial/enumerator"
@@ -15,9 +16,14 @@ var (
 	SerialPort = InitPort(BAUD)
 	PacketReceiverChannel = make(chan string, 100)
 	SerialConnected = true
+	serialSem = make(chan int, 1)
+	SerialReader = bufio.NewReaderSize(SerialPort, 1024)
+
 )
 
 func InitPort(baud int) (SerialPort *serial.Port) {
+	serialSem <- 1
+	SerialConnected = true
 	portList, err := enumerator.GetDetailedPortsList()
 	if err != nil {
 		log.Fatal(err)
@@ -26,6 +32,7 @@ func InitPort(baud int) (SerialPort *serial.Port) {
 	if len(portList) == 0 {
 		fmt.Println("No COM ports found.")
 		SerialConnected = false
+		<- serialSem
 		return nil
 	}
 	/*
@@ -46,7 +53,13 @@ func InitPort(baud int) (SerialPort *serial.Port) {
 	if Port == "" {
 		fmt.Println("No valid COM ports found.")
 		SerialConnected = false
+		<- serialSem
 		return nil
+	}
+
+	if SerialPort != nil {
+		<- serialSem
+		return SerialPort
 	}
 	
 	fmt.Println("Connected to", Port)
@@ -55,33 +68,33 @@ func InitPort(baud int) (SerialPort *serial.Port) {
 	if err != nil {
 		log.Fatal(err)
 	}
+	SerialConnected = true
+	<- serialSem
 	return
 }
 
 func ReceivePacket() {
-	if !SerialConnected {
-		fmt.Println("XBee not connected.")
-		return
-	}
-	reader := bufio.NewReaderSize(SerialPort, 1024)
 	for {
-		data, err := reader.ReadString(10)
-		if err != nil {
-			log.Fatal(err)
+		if !SerialConnected {
+			fmt.Println("XBee not connected.")
+			time.Sleep(time.Second/4)
+		} else {
+			data, err := SerialReader.ReadString(10)
+			if err != nil {
+				serialSem <- 2
+				if err.Error() == "Invalid port on read" {
+					SerialReader = bufio.NewReaderSize(SerialPort, 1024)
+					log.Println("Reconnecting SerialReader...")
+				} else {
+					log.Println(err)
+					SerialConnected = false
+				}
+				<- serialSem
+			}
+			fmt.Println(data)
+			PacketReceiverChannel <- data
 		}
-		fmt.Println(data)
-		PacketReceiverChannel <- data
 	}
-
-	// scanner := bufio.NewScanner(SerialPort)
-	// for scanner.Scan() {
-	// 	data := scanner.Text()
-	// 	if err := scanner.Err(); err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	// 	fmt.Println(data)
-	// 	PacketReceiverChannel <- data
-	// }
 }
 
 func SendPacket(data string) {
@@ -89,9 +102,11 @@ func SendPacket(data string) {
 		fmt.Println("XBee not connected.")
 		return
 	}
+	serialSem <- 3
 	_, err := SerialPort.Write([]byte(data))
 	if err != nil {
 		log.Println(err)
 		return
 	}
+	<- serialSem
 }
