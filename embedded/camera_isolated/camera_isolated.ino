@@ -1,4 +1,4 @@
-const int trig = 26;
+const int trig = 4;
 
 void setup() {     
   Serial.begin(115200); 

@@ -64,7 +64,7 @@ const int fServoPin = 15;
 const int pServoPin = 14;
 const int mosfetPin = 27;
 const int buzPin = 21;
-const int cameraPin = 26;
+const int cameraPin = 4;
 
 File packet_csv;
 File backup_txt;
