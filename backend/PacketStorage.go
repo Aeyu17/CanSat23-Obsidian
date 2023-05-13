@@ -3,7 +3,7 @@ package backend
 import (
 	"container/list"
 	"strings"
-	// "time"
+	"time"
 	"fmt"
 )
 
@@ -19,7 +19,7 @@ func PacketReceiver(c chan string) {
 			c <- packet
 			fmt.Println("Packet Received")
 		} else if Mode == "gen" {
-			// time.Sleep(time.Second)
+			time.Sleep(time.Second)
 			packet = GeneratePacket()
 			c <- packet
 		} else {
