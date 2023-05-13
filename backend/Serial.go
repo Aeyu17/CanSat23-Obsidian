@@ -23,7 +23,6 @@ var (
 
 func InitPort(baud int) (SerialPort *serial.Port) {
 	serialSem <- 1
-	SerialConnected = true
 	portList, err := enumerator.GetDetailedPortsList()
 	if err != nil {
 		log.Fatal(err)
@@ -58,16 +57,21 @@ func InitPort(baud int) (SerialPort *serial.Port) {
 	}
 
 	if SerialPort != nil {
+		SerialConnected = true
 		<- serialSem
 		return SerialPort
 	}
 	
-	fmt.Println("Connected to", Port)
+	fmt.Println("Connecting to", Port)
 	c := &serial.Config{Name: Port, Baud: baud}
 	SerialPort, err = serial.OpenPort(c)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		SerialConnected = false
+		<- serialSem
+		return nil
 	}
+	fmt.Println("Connected to", Port)
 	SerialConnected = true
 	<- serialSem
 	return

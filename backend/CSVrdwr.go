@@ -14,7 +14,8 @@ func WriteToCSV(message string, csv string) {
 	newFileC, err := os.OpenFile(csv, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 
 	defer newFileC.Close()
@@ -27,7 +28,8 @@ func WriteToCSV(message string, csv string) {
 
 	//logs error if file could be wrote to
 	if err2 != nil {
-		log.Fatal(err2)
+		log.Println(err2)
+		return
 	}
 }
 
@@ -39,7 +41,8 @@ func ReadPressureCSV(pcsv string) (pcmd string){
 	}()
 
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
+		return
 	}
 
 	r := csv.NewReader(csvfile)
@@ -54,7 +57,8 @@ func ReadPressureCSV(pcsv string) (pcmd string){
 			break
 		}
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
+			return
 		}
 
 	}
