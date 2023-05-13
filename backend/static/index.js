@@ -16,6 +16,7 @@ let gpsSatellites = -1;
 let tiltArr = [];
 let cmdEcho = "NONE";
 let simMode = false;
+let packetsReceived = -1;
 
 let startTime = "00:00:00";
 
@@ -32,6 +33,7 @@ window.onload = function () {
 
         missionTime = packetArr[1];
         packetCount = parseInt(packetArr[2]);
+        packetsReceived++;
         mode = packetArr[3];
         state = packetArr[4];
         let alt = parseFloat(packetArr[5]);
@@ -130,7 +132,8 @@ window.onload = function () {
         document.getElementById("GPSAltitude").textContent = "GPS Altitude: " + gpsAltitude + "m";
         document.getElementById("GPSSats").textContent = "SIV: " + gpsSatellites;
         document.getElementById("CMDEcho").textContent = "Command Echo: " + cmdEcho;
-
+        document.getElementById("BatteryBar").value = (volt - 3.8)/2.8;
+        document.getElementById("PacketLossBar").value = packetsReceived/packetCount;
     }
 
     gcsSocket.onmessage = function (event) {
@@ -373,6 +376,8 @@ window.onload = function () {
         document.getElementById("GPSAltitude").textContent = "GPS Altitude: 0m";
         document.getElementById("GPSSats").textContent = "SIV: 0";
         document.getElementById("CMDEcho").textContent = "Command Echo: None";
+        document.getElementById("BatteryBar").value = 0;
+        document.getElementById("PacketLossBar").value = 0;
 
         document.getElementById("telemetryToggle").checked = false;
         document.getElementById("simulationToggle").checked = false;

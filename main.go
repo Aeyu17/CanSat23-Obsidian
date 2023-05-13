@@ -86,7 +86,7 @@ func main() {
 				backend.SerialPort = backend.InitPort(backend.BAUD)
 				backend.SerialReader = bufio.NewReaderSize(backend.SerialPort, 1024)
 			}
-			time.Sleep(time.Second/2)
+			time.Sleep(time.Second)
 		}
 	}()
 

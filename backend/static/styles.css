@@ -57,7 +57,7 @@
     width: 25vw;
 
     background-color: #A3C5E5;
-    font-size: 1rem;
+    font-size: 0.9rem;
     color: black;
 
     border-top-style: solid;
@@ -90,4 +90,34 @@
     padding: 5px;
 
     height: 50%;
+}
+
+.BatteryPercent {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+
+}
+.PacketLoss {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+progress[value]::-webkit-progress-bar {
+    background-color: #eee;
+    border-radius: 2px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25) inset;
+  }
+
+progress {
+    -webkit-appearance: none;
+    appearance: none;
+
+    height: 20px;
+    width: 220px;
+
+    color:red;
 }
