@@ -35,11 +35,12 @@ func PacketEnqueuer(c chan string, l *list.List) {
 		var packetArr = strings.Split(packet, ",")
 		if packetArr[0] != "1070" || !(len(packetArr) == 2 || len(packetArr) == 20) {
 			fmt.Println("Bad packet received.")
+			<- packetSem
 			continue
 		}
 		l.PushBack(packet)
 		fmt.Println("Packet queued.")
-		fmt.Println(<- packetSem)
+		<- packetSem
 	}
 }
 
