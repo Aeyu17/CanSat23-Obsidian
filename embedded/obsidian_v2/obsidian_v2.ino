@@ -49,6 +49,10 @@ String cmdecho = "NONE";
 int startHour;
 int startMinute;
 int startSecond;
+String cmd;
+String cmdarg;
+bool simEnable = false;
+bool simActive = false;
 
 // Internal for Reset
 bool bmpWorking = true;
@@ -209,6 +213,8 @@ void setup() {
 
   // Buzzer set up 
   pinMode(buzPin, OUTPUT);
+
+  resetRelease();
 }
 
 
@@ -323,7 +329,7 @@ void openPanels() {
   switch (panelPosition) {
     case 0:
     panelServo.write(130);
-    delay(8000);
+    delay(4000);
     panelServo.write(93);
     break;
     
@@ -350,7 +356,7 @@ void closePanels() {
   switch (panelPosition) {
     case 1:
     panelServo.write(50);
-    delay(8000);
+    delay(3000);
     panelServo.write(93);
     break;
 
@@ -441,13 +447,13 @@ void buzzer(){
 
 
 ///////////////////////////////////// COMMAND READING /////////////////////////////////////
-void readcommands(){
+void readcommands(String cmd, String cmdarg){
   if (Serial1.available()){
     String packet = Serial1.readString();
-    if (itemAt(packet, 0) == "CMD" && itemAt(packet, 1) == "1070"){
-      String cmd = itemAt(packet, 2);
-      String cmdarg = itemAt(packet, 3);
-
+    /*if (itemAt(packet, 0) == "CMD" && itemAt(packet, 1) == "1070"){
+      cmd = itemAt(packet, 2);
+      cmdarg = itemAt(packet, 3);
+    */
       if (cmd == "CX"){
         if (cmdarg == "ON\n"){
           Serial.println("CXON");
@@ -527,17 +533,23 @@ void readcommands(){
         }
 
       } else if (cmd == "SIM"){
-        if (cmdarg = "ENABLE\n") {
+        if (cmdarg == "ENABLE\n") {
           Serial.println("SIME");
           cmdecho = "SIME";
+          simEnable = true;
+          flightMode = 'S';
           
-        } else if (cmdarg = "DISABLE\n") {
+        } else if (cmdarg == "DISABLE\n") {
           Serial.println("SIMD");
           cmdecho = "SIMD";
+          simActive = false;
+          simEnable = false;
+          flightMode = 'F';
           
-        } else if (cmdarg = "ACTIVATE\n") {
+        } else if (cmdarg == "ACTIVATE\n") {
           Serial.println("SIMA");
           cmdecho = "SIMA";
+          simActive = true;
           
         } else {
           Serial.println("Invalid command received.");
@@ -595,7 +607,7 @@ void readcommands(){
       }
     }
   }
-}
+//}
 
 
 
@@ -609,10 +621,13 @@ void updateData() {
 
   // BMP
   if (bmpWorking) {
+    if (!(simActive && simEnable))
+    {  
+      pressure = round(bmp.pressure / 100.0)/10.0;
+      last_alt = altitude;
+      altitude = round(10 * (bmp.readAltitude(SEALEVELPRESSURE_HPA) - alt_offset))/10.0;
+    }
     temperature = round(10 * bmp.temperature)/10.0;
-    pressure = round(bmp.pressure / 100.0)/10.0;
-    last_alt = altitude;
-    altitude = round(10 * (bmp.readAltitude(SEALEVELPRESSURE_HPA) - alt_offset))/10.0;
   }
 
   // SAM
@@ -710,7 +725,41 @@ String packetGenerator(){
 
 ///////////////////////////////////// FLIGHT STATE LOOP /////////////////////////////////////
 void loop() {
- 
+
+  if (!(simActive and simEnable) and Serial1.available()) {
+    String packet = Serial1.readString();
+  
+    if (itemAt(packet, 0) == "CMD" and itemAt(packet, 1) == "1070") {
+      readcommands(itemAt(packet, 2), itemAt(packet, 3)); 
+      // maybe check if item 3 is CMD?? that would happen if there is no arg like in CAL
+    }
+  } 
+  else if (simActive and simEnable){
+    while (true){
+      while (!Serial1.available()){
+        ;
+      }
+      
+      String packet = Serial1.readString();
+    
+      if (itemAt(packet,0) == "CMD" && itemAt(packet, 1) == "1070"){
+        cmd = itemAt(packet, 2);
+        cmdarg = itemAt(packet, 3);
+      
+        if (cmd == "SIMP\n"){
+          pressure = cmdarg.toFloat(); // convert string to float
+          altitude = round(10 * (bmp.readAltitude(pressure)))/10.0;
+          cmdecho = "SIMP";
+          Serial.println("SIMP");
+          break;
+        }
+        else {
+          readcommands(cmd, cmdarg);
+        }
+      }
+    }
+  }
+  
   if (sdWorking){
     packet_csv = SD.open("/testlaunchdata.csv", FILE_APPEND);
     backup_txt = SD.open("/reset.txt", FILE_WRITE);
@@ -773,7 +822,8 @@ void loop() {
     }
   }
 
-  readcommands();
+  // I don't think we need this anymore
+  // readcommands();
   
   if (sdWorking){
     packet_csv.close();

@@ -11,7 +11,7 @@ const int mosfetPin = 27;
 
 const int delayTime = 3000;
 
-int panelPosition = 2;
+int panelPosition = 0;
 
 // 50 is clockwise, closing
 // 93 is stop
@@ -29,40 +29,40 @@ void setup() {
 }
 
 void loop() {
-  // raiseFlag();
-  // delay(delayTime);
-  // lowerFlag();
-  // delay(delayTime);
+//  raiseFlag();
+//  delay(delayTime);
+//  lowerFlag();
+//  delay(delayTime);
+//
+   releaseContainer();
+   delay(delayTime);
+//   releaseParachute();
+//   delay(delayTime);
+//   resetRelease();
+//   delay(delayTime);
 
-  // releaseContainer();
-  // delay(delayTime);
-  // releaseParachute();
-  // delay(delayTime);
-  // resetRelease();
-  // delay(delayTime);
-
-  // Serial.println("Going to Pos 1, opening");
-  // openPanels();
-  // delay(delayTime);
-  Serial.println("Going to Pos 0, closing"); 
-  closePanels();
-  delay(delayTime);
-  panelPosition = 2;
-  // Serial.println("Going to Pos 2, opening");
-  // upright();
-  // delay(delayTime);
-  // Serial.println("Going to Pos 0, closing");
-  // closePanels();
-  // delay(delayTime);
-  // Serial.println("Going to Pos 1, opening");
-  // openPanels();
-  // delay(delayTime);
-  // Serial.println("Going to Pos 2, opening");
-  // upright();
-  // delay(delayTime);
-  // Serial.println("Going to Pos 0, closing");
-  // closePanels();
-  // delay(delayTime + delayTime);
+//   panelPosition = 2;
+//   Serial.println("Going to Pos 1, opening");
+//   openPanels();
+//   delay(delayTime);
+//   Serial.println("Going to Pos 0, closing"); 
+//   closePanels();
+//   delay(delayTime);
+//   Serial.println("Going to Pos 2, opening");
+//   upright();
+//   delay(delayTime);
+//   Serial.println("Going to Pos 0, closing");
+//   closePanels();
+//   delay(delayTime);
+//   Serial.println("Going to Pos 1, opening");
+//   openPanels();
+//   delay(delayTime);
+//   Serial.println("Going to Pos 2, opening");
+//   upright();
+//   delay(delayTime);
+//   Serial.println("Going to Pos 0, closing");
+//   closePanels();
+//   delay(delayTime + delayTime);
 
   // raiseFlag();
   // delay(delayTime);
@@ -106,7 +106,7 @@ void openPanels() {
   switch (panelPosition) {
     case 0:
     panelServo.write(130);
-    delay(8000);
+    delay(4000);
     panelServo.write(93);
     break;
     
@@ -130,7 +130,7 @@ void closePanels() {
   switch (panelPosition) {
     case 1:
     panelServo.write(50);
-    delay(8000);
+    delay(3000);
     panelServo.write(93);
     break;
 
