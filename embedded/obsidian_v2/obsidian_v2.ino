@@ -169,8 +169,10 @@ void setup() {
       hs_deployed = itemAt(readFile,4).charAt(0);
       pc_deployed = itemAt(readFile,5).charAt(0);
       mast_raised = itemAt(readFile,6).charAt(0);
-      cmdecho = itemAt(readFile, 7);
-      panelPosition = itemAt(readFile, 8).toInt();
+      simEnable = itemAt(readFile,7).toInt() == 1;
+      simActive = itemAt(readFile,8).toInt() == 1;
+      cmdecho = itemAt(readFile, 9);
+      panelPosition = itemAt(readFile, 10).toInt();
 
     } else {
       // SET UP BACKUP TXT
@@ -183,6 +185,8 @@ void setup() {
                            String(hs_deployed) + "," + 
                            String(pc_deployed) + "," + 
                            String(mast_raised) + "," + 
+                           String(simEnable) + "," +
+                           String(simActive) + "," +
                            String(cmdecho) + "," +
                            String(panelPosition) + "\n";
       writeToFile(resetPacket, backup_txt); 
@@ -448,166 +452,160 @@ void buzzer(){
 
 ///////////////////////////////////// COMMAND READING /////////////////////////////////////
 void readcommands(String cmd, String cmdarg){
-  if (Serial1.available()){
+  /*if (Serial1.available()){
     String packet = Serial1.readString();
-    /*if (itemAt(packet, 0) == "CMD" && itemAt(packet, 1) == "1070"){
+    if (itemAt(packet, 0) == "CMD" && itemAt(packet, 1) == "1070"){
       cmd = itemAt(packet, 2);
       cmdarg = itemAt(packet, 3);
     */
-      if (cmd == "CX"){
-        if (cmdarg == "ON\n"){
-          Serial.println("CXON");
-          cmdecho = "CXON";
-          flightState = "READY";
-        } else if (cmdarg == "OFF\n"){
-          Serial.println("CXOFF");
-          cmdecho = "CXOFF";
-          flightState = "IDLE";
-        } else {
-          Serial.println("Invalid command received.");
-        }
-
-      } else if (cmd == "ST"){
-        if (cmdarg == "GPS\n") {
-          Serial.println("STGPS");
-          cmdecho = "STGPS";
-          
-          gps_hour = myGNSS.getHour();
-          gps_min = myGNSS.getMinute();
-          gps_sec = myGNSS.getSecond();
-          
-          int dtime = round(millis()/1000);
-  
-          int dhours = int(floor(dtime / 3600));
-          dtime = dtime - dhours * 3600;
-          int dminutes = int(floor(dtime / 60));
-          dtime = dtime - dminutes * 60;
-          int dseconds = dtime;
-
-          startHour = gps_hour.toInt() - dhours;
-          startMinute = gps_min.toInt() - dminutes;
-          startSecond = gps_sec.toInt() - dseconds;
-
-          while (startSecond < 0){
-            startSecond += 60;
-            startMinute--;
-          }
-          while (startMinute < 0){
-            startMinute += 60;
-            startHour--;
-          }
-          while (startHour < 0){
-            startHour += 24;
-          }          
-        } else {
-          Serial.println("STCUS");
-          cmdecho = "STCUS";
-          // hh:mm:ss
-          int newhour = cmdarg.substring(0, 2).toInt();
-          int newmin = cmdarg.substring(3, 5).toInt();
-          int newsec = cmdarg.substring(6).toInt();
-          
-          int dtime = round(millis()/1000);
-  
-          int dhours = int(floor(dtime / 3600));
-          dtime = dtime - dhours * 3600;
-          int dminutes = int(floor(dtime / 60));
-          dtime = dtime - dminutes * 60;
-          int dseconds = dtime;
-
-          startHour = newhour - dhours;
-          startMinute = newmin - dminutes;
-          startSecond = newsec - dseconds;
-
-          if (startSecond < 0){
-            startSecond += 60;
-            startMinute--;
-          }
-          if (startMinute < 0){
-            startMinute += 60;
-            startHour--;
-          }
-          if (startHour < 0){
-            startHour += 24;
-          } 
-        }
-
-      } else if (cmd == "SIM"){
-        if (cmdarg == "ENABLE\n") {
-          Serial.println("SIME");
-          cmdecho = "SIME";
-          simEnable = true;
-          flightMode = 'S';
-          
-        } else if (cmdarg == "DISABLE\n") {
-          Serial.println("SIMD");
-          cmdecho = "SIMD";
-          simActive = false;
-          simEnable = false;
-          flightMode = 'F';
-          
-        } else if (cmdarg == "ACTIVATE\n") {
-          Serial.println("SIMA");
-          cmdecho = "SIMA";
-          simActive = true;
-          
-        } else {
-          Serial.println("Invalid command received.");
-        }
-      } else if (cmd == "SIMP\n"){
-        Serial.println("SIMP");
-        cmdecho = "SIMP";
-        // TODO
-
-      } else if (cmd == "CAL\n"){
-        Serial.println("CAL");
-        cmdecho = "CAL";
-        
-        float number1 = bmp.readAltitude(SEALEVELPRESSURE_HPA);
-        float number2 = bmp.readAltitude(SEALEVELPRESSURE_HPA);
-        float number3 = bmp.readAltitude(SEALEVELPRESSURE_HPA);
-        float number4 = bmp.readAltitude(SEALEVELPRESSURE_HPA);
-        float number5 = bmp.readAltitude(SEALEVELPRESSURE_HPA);;
-        
-        alt_offset = (number1 + number2 + number3 + number4 + number5)/5;
-
-      } else if (cmd == "ACT"){
-        if (cmdarg == "MR\n") {
-          Serial.println("ACTMR");
-          cmdecho = "ACTMR";
-          releaseContainer();
-        } else if (cmdarg == "HS\n") {
-          Serial.println("ACTHS");
-          cmdecho = "ACTHS";
-          upright();
-        } else if (cmdarg == "PC\n") {
-          Serial.println("ACTPC");
-          cmdecho = "ACTPC";
-          pc_deployed = 'C';
-          releaseParachute();
-        } else if (cmdarg == "AB\n") {
-          Serial.println("ACTAB");
-          cmdecho = "ACTAB";
-          buzzer();
-        } else if (cmdarg == "LED\n") {
-          Serial.println("ACTLED");
-          cmdecho = "ACTLED";
-          ledBlink();
-        } else {
-          Serial.println("Invalid command received.");
-        }
-
-      } else if (cmd == "RESREL\n") {
-        Serial.println("RESREL");
-        cmdecho = "RESREL";
-        resetMechanisms();
-
-      } else {
-        Serial.println("Invalid command received.");
-      }
+  if (cmd == "CX"){
+    if (cmdarg == "ON\n"){
+      Serial.println("CXON");
+      cmdecho = "CXON";
+      flightState = "READY";
+    } else if (cmdarg == "OFF\n"){
+      Serial.println("CXOFF");
+      cmdecho = "CXOFF";
+      flightState = "IDLE";
+    } else {
+      Serial.println("Invalid command received.");
     }
+
+  } else if (cmd == "ST"){
+    if (cmdarg == "GPS\n") {
+      Serial.println("STGPS");
+      cmdecho = "STGPS";
+      
+      gps_hour = myGNSS.getHour();
+      gps_min = myGNSS.getMinute();
+      gps_sec = myGNSS.getSecond();
+      
+      int dtime = round(millis()/1000);
+
+      int dhours = int(floor(dtime / 3600));
+      dtime = dtime - dhours * 3600;
+      int dminutes = int(floor(dtime / 60));
+      dtime = dtime - dminutes * 60;
+      int dseconds = dtime;
+
+      startHour = gps_hour.toInt() - dhours;
+      startMinute = gps_min.toInt() - dminutes;
+      startSecond = gps_sec.toInt() - dseconds;
+
+      while (startSecond < 0){
+        startSecond += 60;
+        startMinute--;
+      }
+      while (startMinute < 0){
+        startMinute += 60;
+        startHour--;
+      }
+      while (startHour < 0){
+        startHour += 24;
+      }          
+    } else {
+      Serial.println("STCUS");
+      cmdecho = "STCUS";
+      // hh:mm:ss
+      int newhour = cmdarg.substring(0, 2).toInt();
+      int newmin = cmdarg.substring(3, 5).toInt();
+      int newsec = cmdarg.substring(6).toInt();
+      
+      int dtime = round(millis()/1000);
+
+      int dhours = int(floor(dtime / 3600));
+      dtime = dtime - dhours * 3600;
+      int dminutes = int(floor(dtime / 60));
+      dtime = dtime - dminutes * 60;
+      int dseconds = dtime;
+
+      startHour = newhour - dhours;
+      startMinute = newmin - dminutes;
+      startSecond = newsec - dseconds;
+
+      if (startSecond < 0){
+        startSecond += 60;
+        startMinute--;
+      }
+      if (startMinute < 0){
+        startMinute += 60;
+        startHour--;
+      }
+      if (startHour < 0){
+        startHour += 24;
+      } 
+    }
+
+  } else if (cmd == "SIM"){
+    if (cmdarg == "ENABLE\n") {
+      Serial.println("SIME");
+      cmdecho = "SIME";
+      simEnable = true;
+      flightMode = 'S';
+      
+    } else if (cmdarg == "DISABLE\n") {
+      Serial.println("SIMD");
+      cmdecho = "SIMD";
+      simActive = false;
+      simEnable = false;
+      flightMode = 'F';
+      
+    } else if (cmdarg == "ACTIVATE\n") {
+      Serial.println("SIMA");
+      cmdecho = "SIMA";
+      simActive = true;
+      
+    } else {
+      Serial.println("Invalid command received.");
+    }
+  } 
+  else if (cmd == "CAL\n"){
+    Serial.println("CAL");
+    cmdecho = "CAL";
+    
+    float number1 = bmp.readAltitude(SEALEVELPRESSURE_HPA);
+    float number2 = bmp.readAltitude(SEALEVELPRESSURE_HPA);
+    float number3 = bmp.readAltitude(SEALEVELPRESSURE_HPA);
+    float number4 = bmp.readAltitude(SEALEVELPRESSURE_HPA);
+    float number5 = bmp.readAltitude(SEALEVELPRESSURE_HPA);;
+    
+    alt_offset = (number1 + number2 + number3 + number4 + number5)/5;
+
+  } else if (cmd == "ACT"){
+    if (cmdarg == "MR\n") {
+      Serial.println("ACTMR");
+      cmdecho = "ACTMR";
+      releaseContainer();
+    } else if (cmdarg == "HS\n") {
+      Serial.println("ACTHS");
+      cmdecho = "ACTHS";
+      upright();
+    } else if (cmdarg == "PC\n") {
+      Serial.println("ACTPC");
+      cmdecho = "ACTPC";
+      pc_deployed = 'C';
+      releaseParachute();
+    } else if (cmdarg == "AB\n") {
+      Serial.println("ACTAB");
+      cmdecho = "ACTAB";
+      buzzer();
+    } else if (cmdarg == "LED\n") {
+      Serial.println("ACTLED");
+      cmdecho = "ACTLED";
+      ledBlink();
+    } else {
+      Serial.println("Invalid command received.");
+    }
+
+  } else if (cmd == "RESREL\n") {
+    Serial.println("RESREL");
+    cmdecho = "RESREL";
+    resetMechanisms();
+
+  } else {
+    Serial.println("Invalid command received.");
   }
-//}
+}
 
 
 
@@ -771,6 +769,8 @@ void loop() {
                          String(hs_deployed) + "," + 
                          String(pc_deployed) + "," + 
                          String(mast_raised) + "," + 
+                         String(simEnable) + "," +
+                         String(simActive) + "," +
                          String(cmdecho) + "," + 
                          String(panelPosition) + '\n';
                          
@@ -821,9 +821,6 @@ void loop() {
       Serial.println("No action required for the cases.");
     }
   }
-
-  // I don't think we need this anymore
-  // readcommands();
   
   if (sdWorking){
     packet_csv.close();
