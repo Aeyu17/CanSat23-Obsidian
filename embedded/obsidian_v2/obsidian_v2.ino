@@ -162,7 +162,7 @@ void setup() {
       backup_txt.seek(0);
       String readFile = backup_txt.readStringUntil('\n');
 
-      alt_offset = itemAt(readFile,0).toInt();
+      alt_offset = itemAt(readFile,0).toFloat();
       packetCount = itemAt(readFile,1).toInt();
       flightMode = itemAt(readFile,2).charAt(0); 
       flightState = itemAt(readFile,3);
@@ -549,12 +549,14 @@ void readcommands(String cmd, String cmdarg){
       simActive = false;
       simEnable = false;
       flightMode = 'F';
+      flightState = "IDLE";
       
     } else if (cmdarg == "ACTIVATE\n") {
       Serial.println("SIMA");
       cmdecho = "SIMA";
       simActive = true;
-      
+      flightState = "READY";
+   
     } else {
       Serial.println("Invalid command received.");
     }
@@ -723,40 +725,6 @@ String packetGenerator(){
 
 ///////////////////////////////////// FLIGHT STATE LOOP /////////////////////////////////////
 void loop() {
-
-  if (!(simActive and simEnable) and Serial1.available()) {
-    String packet = Serial1.readString();
-  
-    if (itemAt(packet, 0) == "CMD" and itemAt(packet, 1) == "1070") {
-      readcommands(itemAt(packet, 2), itemAt(packet, 3)); 
-      // maybe check if item 3 is CMD?? that would happen if there is no arg like in CAL
-    }
-  } 
-  else if (simActive and simEnable){
-    while (true){
-      while (!Serial1.available()){
-        ;
-      }
-      
-      String packet = Serial1.readString();
-    
-      if (itemAt(packet,0) == "CMD" && itemAt(packet, 1) == "1070"){
-        cmd = itemAt(packet, 2);
-        cmdarg = itemAt(packet, 3);
-      
-        if (cmd == "SIMP\n"){
-          pressure = cmdarg.toFloat(); // convert string to float
-          altitude = round(10 * (bmp.readAltitude(pressure)))/10.0;
-          cmdecho = "SIMP";
-          Serial.println("SIMP");
-          break;
-        }
-        else {
-          readcommands(cmd, cmdarg);
-        }
-      }
-    }
-  }
   
   if (sdWorking){
     packet_csv = SD.open("/testlaunchdata.csv", FILE_APPEND);
@@ -824,6 +792,39 @@ void loop() {
   
   if (sdWorking){
     packet_csv.close();
+  }
+
+  if (!(simActive and simEnable) and Serial1.available()) {
+    String packet = Serial1.readString();
+    Serial.print(packet);
+  
+    if (itemAt(packet, 0) == "CMD" and itemAt(packet, 1) == "1070") {
+      readcommands(itemAt(packet, 2), itemAt(packet, 3)); 
+      // maybe check if item 3 is CMD?? that would happen if there is no arg like in CAL
+    }
+  } 
+  else if (simActive and simEnable){
+    while (true){
+      while (!Serial1.available()){;}
+      String packet = Serial1.readString();
+      Serial.print(packet);
+    
+      if (itemAt(packet,0) == "CMD" && itemAt(packet, 1) == "1070"){
+        cmd = itemAt(packet, 2);
+        cmdarg = itemAt(packet, 3);
+      
+        if (cmd == "SIMP"){
+          pressure = cmdarg.toFloat()/100; // convert string to float
+          altitude = round(10 * (bmp.readAltitude(pressure)))/10.0;
+          cmdecho = "SIMP";
+          Serial.println("SIMP");
+          break;
+        }
+        else {
+          readcommands(cmd, cmdarg);
+        }
+      }
+    }
   }
 
   ledBlink(); // make sure this stays at the end of the loop
