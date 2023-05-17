@@ -107,10 +107,12 @@ func SendPacket(data string) {
 		return
 	}
 	serialSem <- 3
+	fmt.Println("Sending: " + data)
 	_, err := SerialPort.Write([]byte(data))
 	if err != nil {
 		log.Println(err)
 		return
 	}
+	time.Sleep(time.Second*2)
 	<- serialSem
 }

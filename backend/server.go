@@ -108,6 +108,7 @@ func reader(conn *websocket.Conn) {
 			SimActive = true
 			fmt.Println("Simulation mode activated.")
 			SendPacket("CMD,1070,SIM,ACTIVATE\n")
+			time.Sleep(time.Second*5)
 
 		case "CAL":
 			fmt.Println("CAL CALLED")
