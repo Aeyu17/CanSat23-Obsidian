@@ -41,7 +41,7 @@ float voltage;
 String missionTime = "00:00:00";
 int packetCount = 0;
 char flightMode = 'F';
-String flightState = "IDLE"; // READY IF TESTING ON ITS OWN, IDLE IF TESTING XBEES
+String flightState = "READY"; // READY IF TESTING ON ITS OWN, IDLE IF TESTING XBEES
 char hs_deployed = 'N';
 char pc_deployed = 'N';
 char mast_raised = 'N';
@@ -75,7 +75,6 @@ File backup_txt;
 Servo releaseServo;
 Servo flagServo;
 Servo panelServo;
-
 
 ///////////////////////////////////// SETUP /////////////////////////////////////
 void setup() {  
@@ -217,10 +216,7 @@ void setup() {
 
   // Buzzer set up 
   pinMode(buzPin, OUTPUT);
-
-  resetRelease();
 }
-
 
 ///////////////////////////////////// HELPER FUNCTIONS /////////////////////////////////////
 String itemAt(String packet, int pos){
@@ -284,137 +280,95 @@ void debugPrintData(){
   Serial.println("-------------------------");
 }
 
-///////////////////////////////////// RELEASE MECHANISMS /////////////////////////////////////
-void raiseFlag() {
-  Serial.println("Raising the flag...");
+///////////////////////////////////// MECHANISMS /////////////////////////////////////
+void setFlagPosition(int pos) {
+  // 0 lowers the flag, 1 raises the flag
   digitalWrite(mosfetPin, HIGH);
-  delay(500);
-  flagServo.write(180);
-  digitalWrite(mosfetPin, LOW);
-}
+  delay(250);
 
-void lowerFlag() {
-  Serial.println("Lowering the flag...");
-  digitalWrite(mosfetPin, HIGH);
-  delay(500);
-  flagServo.write(0);
-  digitalWrite(mosfetPin, LOW);
-}
-
-void releaseContainer() {
-  Serial.println("Releasing from the container...");
-  digitalWrite(mosfetPin, HIGH);
-  delay(500);
-  releaseServo.write(90);
-  digitalWrite(mosfetPin, LOW);
-}
-
-void releaseParachute() {
-  Serial.println("Releasing the parachute...");
-  digitalWrite(mosfetPin, HIGH);
-  delay(500);
-  releaseServo.write(180);
-  digitalWrite(mosfetPin, LOW);
-}
-
-void resetRelease() {
-  Serial.println("Resetting the release mechanism...");
-  digitalWrite(mosfetPin, HIGH);
-  delay(500);
-  releaseServo.write(0);
-  digitalWrite(mosfetPin, LOW);
-}
-
-// 130 closes, 50 opens, 93 stops
-void openPanels() {
-  Serial.println("Opening the heat shield...");
-  digitalWrite(mosfetPin, HIGH);
-  delay(500);
-  switch (panelPosition) {
-    case 0:
-    panelServo.write(130);
-    delay(4000);
-    panelServo.write(93);
-    break;
-    
-    case 2:
-    panelServo.write(50);
-    delay(6000);
-    panelServo.write(93);
-    break;
-
-    case 1:
-    default:
-    Serial.println("The heat shield is already in position 1.");
-    break;
+  if (pos == 0 || pos == 1) {
+    flagServo.write(pos * 180);
+    if (pos) {
+      mast_raised = 'M';
+    } else {
+      mast_raised = 'N';
+    }
+  } else {
+    Serial.println("Invalid flag position.");
   }
-  panelPosition = 1;
-  Serial.println("The heat shield is open.");
+
   digitalWrite(mosfetPin, LOW);
 }
 
-void closePanels() {
-  Serial.println("Closing the heat shield...");
+void setReleasePosition(int pos) {
+  // 0 closes the release, 1 releases the container, 2 releases the parachute
   digitalWrite(mosfetPin, HIGH);
-  delay(500);
-  switch (panelPosition) {
-    case 1:
-    panelServo.write(50);
-    delay(3000);
-    panelServo.write(93);
-    break;
+  delay(250);
 
-    case 2:
-    panelServo.write(50);
-    delay(14000);
-    panelServo.write(93);
-    break;
-
-    case 0:
-    default:
-    Serial.println("The panels are already closed!");
-    break;
+  if (pos == 0 || pos == 1 || pos == 2) {
+    releaseServo.write(pos * 90);
+    if (pos == 1) {
+      hs_deployed = 'P';
+    } else if (pos == 2){
+      pc_deployed = 'C';
+    }
+  } else {
+    Serial.println("Invalid release position.");
   }
-  panelPosition = 0;
-  Serial.println("The heat shield is closed.");
+
   digitalWrite(mosfetPin, LOW);
 }
 
-void upright() {
-  Serial.println("Opening the heat shield...");
+void setShieldPosition(int pos) {
+  if (pos == panelPosition) {
+    Serial.println("The heat shield is already at that position.");
+    return;
+  }
+
   digitalWrite(mosfetPin, HIGH);
-  delay(500);
-  switch (panelPosition) {
-    case 0:
-    panelServo.write(130);
-    delay(6000);
-    panelServo.write(93);
-    break;
+  delay(250);
 
-    case 1:
+  if (pos > panelPosition) { // heat shield needs to open
     panelServo.write(130);
-    delay(14000);
-    panelServo.write(93);
-    break;
 
-    case 2:
-    default:
-    Serial.println("The panels have already uprighted!");
-    break;
+    if (panelPosition == 0 && pos == 1) {
+      delay(3000);
+
+    } else if (panelPosition == 0 && pos == 2) {
+      delay(25000);
+
+    } else if (panelPosition == 1 && pos == 2) {
+      delay(12000);
+
+    } else {
+      panelServo.write(93);
+      Serial.println("Invalid opening case.");
+      return;
+
+    }
+  } else { // heat shield needs to close
+    panelServo.write(50);
+
+    if (panelPosition == 2 && pos == 1) {
+      delay(12000);
+
+    } else if (panelPosition == 2 && pos == 0) {
+      delay(17000);
+
+    } else if (panelPosition == 1 && pos == 0) {
+      delay(4000);
+
+    } else {
+      panelServo.write(93);
+      Serial.println("Invalid closing case.");
+      return;
+
+    }
   }
-  panelPosition = 2;
-  Serial.println("The heat shield is open.");
+  panelPosition = pos;
+  panelServo.write(93);
+
   digitalWrite(mosfetPin, LOW);
-}
-
-void resetMechanisms() {
-  Serial.println("Resetting the mechanisms...");
-  closePanels();
-
-  resetRelease();
-
-  lowerFlag();
-  Serial.println("All mechanisms are reset.");
 }
 
 void startRecording() {
@@ -434,39 +388,32 @@ void stopRecording() {
   digitalWrite(cameraPin, LOW);
   Serial.println("Recording stopped.");
 }
-
-// led setup 
+ 
 void ledBlink(){
   pinMode(ledPin,HIGH);
   delay(100);
   pinMode(ledPin,LOW);
 }
 
-// buzzer setup
 void buzzer(){
   pinMode(buzPin,HIGH);
-  delay(100);
+  delay(500);
   pinMode(buzPin,LOW);
 }
 
-
 ///////////////////////////////////// COMMAND READING /////////////////////////////////////
 void readcommands(String cmd, String cmdarg){
-  /*if (Serial1.available()){
-    String packet = Serial1.readString();
-    if (itemAt(packet, 0) == "CMD" && itemAt(packet, 1) == "1070"){
-      cmd = itemAt(packet, 2);
-      cmdarg = itemAt(packet, 3);
-    */
   if (cmd == "CX"){
     if (cmdarg == "ON\n"){
       Serial.println("CXON");
       cmdecho = "CXON";
       flightState = "READY";
+
     } else if (cmdarg == "OFF\n"){
       Serial.println("CXOFF");
       cmdecho = "CXOFF";
       flightState = "IDLE";
+
     } else {
       Serial.println("Invalid command received.");
     }
@@ -560,75 +507,74 @@ void readcommands(String cmd, String cmdarg){
     } else {
       Serial.println("Invalid command received.");
     }
-  } 
-  else if (cmd == "CAL\n"){
+  } else if (cmd == "CAL\n"){
     Serial.println("CAL");
     cmdecho = "CAL";
-    
-    float number1 = bmp.readAltitude(SEALEVELPRESSURE_HPA);
-    float number2 = bmp.readAltitude(SEALEVELPRESSURE_HPA);
-    float number3 = bmp.readAltitude(SEALEVELPRESSURE_HPA);
-    float number4 = bmp.readAltitude(SEALEVELPRESSURE_HPA);
-    float number5 = bmp.readAltitude(SEALEVELPRESSURE_HPA);;
-    
-    alt_offset = (number1 + number2 + number3 + number4 + number5)/5;
-  } 
-  else if (cmd == "ACT"){ // NOT DONE
+    alt_offset = setDefaultAlt();
+
+  } else if (cmd == "ACT"){ // NOT DONE
     if (cmdarg == "AB\n") {
       Serial.println("ACTAB");
       cmdecho = "ACTAB";
       buzzer();
+
     } else if (cmdarg == "LED\n") {
       Serial.println("ACTLED");
       cmdecho = "ACTLED";
       ledBlink();
+
     } else if (cmdarg == "FL0\n") { // not done
       Serial.println("ACTFL0");
       cmdecho = "ACTFL0";
-      flagControl(0);
+      setFlagPosition(0);
+
     } else if (cmdarg == "FL1\n") { // not done
       Serial.println("ACTFL1");
       cmdecho = "ACTFL1";
-      flagControl(1);
+      setFlagPosition(1);
+
     } else if (cmdarg == "RL0\n") { // not done
       Serial.println("ACTRL0");
       cmdecho = "ACTRL0";
-      releaseControl(0);
+      setReleasePosition(0);
+
     } else if (cmdarg == "RL1\n") { // not done
       Serial.println("ACTRL1");
       cmdecho = "ACTRL1";
-      releaseControl(1);
+      setReleasePosition(1);
+      
     } else if (cmdarg == "RL2\n") { // not done
       Serial.println("ACTRL2");
       cmdecho = "ACTRL2";
-      releaseControl(2);
+      setReleasePosition(2);
+
     } else if (cmdarg == "HS0\n") { // not done
       Serial.println("ACTHS0");
       cmdecho = "ACTHS0";
-      panelControl(0);
+      setShieldPosition(0);
+
     } else if (cmdarg == "HS1\n") { // not done
       Serial.println("ACTHS1");
       cmdecho = "ACTHS1";
-      panelControl(1);
+      setShieldPosition(1);
+
     } else if (cmdarg == "HS2\n") { // not done
       Serial.println("ACTHS2");
       cmdecho = "ACTHS2";
-      panelControl(2);
+      setShieldPosition(2);
+
     } else if (cmdarg == "RES\n") {
       Serial.println("ACTRES");
       cmdecho = "ACTRES";
-      flagcontrol(0);
-      releaseControl(0);
-      panelControl(0);
-    }
-    else {
+      setFlagPosition(0);
+      setReleasePosition(0);
+      setShieldPosition(0);
+
+    } else {
       Serial.println("Invalid command received.");
     }
   } 
 }
-
-
-
 
 ///////////////////////////////////// READING DATA /////////////////////////////////////
 void updateData() {
@@ -738,9 +684,6 @@ String packetGenerator(){
     return packet;         
 }
 
-
-
-
 ///////////////////////////////////// FLIGHT STATE LOOP /////////////////////////////////////
 void loop() {
   
@@ -773,37 +716,35 @@ void loop() {
     Serial1.print(packet);
     debugPrintData();
     
-    if (flightState == "READY" && altitude >= 5){
+    if (flightState == "READY" && altitude >= 50){
       flightState = "ASCENDING";
-    }
-    else if (flightState == "ASCENDING" && altitude > 200 && altitude - last_alt < 0){
+
+    } else if (flightState == "ASCENDING" && altitude > 200 && altitude - last_alt < 0){
       startRecording();
       flightState = "DESCENDING";
-    }
-    else if (flightState == "DESCENDING" && altitude <= 500){
-      releaseContainer();
-      openPanels();
+
+    } else if (flightState == "DESCENDING" && altitude <= 500){
+      setReleasePosition(1);
+      setShieldPosition(1);
       flightState = "HSDEPLOYED";
       hs_deployed = 'P';
 
-    }
-    else if (flightState == "HSDEPLOYED" && altitude <= 200){
-      closePanels();
-      releaseParachute();
+    } else if (flightState == "HSDEPLOYED" && altitude <= 200){
+      setReleasePosition(2);
+      setShieldPosition(0);
       flightState = "PCDEPLOYED";
       pc_deployed = 'C';
-    }
-    else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1){
-      upright();
+
+    } else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1){
+      setShieldPosition(2);
+      setFlagPosition(1);
       stopRecording();
-      raiseFlag();
+
       flightState = "LANDED";
       mast_raised = 'M';
-    }
-    else if (flightState == "LANDED"){
+    } else if (flightState == "LANDED"){
       buzzer();
-    }
-    else {
+    } else {
       Serial.println("No action required for the cases.");
     }
   }
@@ -845,5 +786,6 @@ void loop() {
     }
   }
 
+  buzzer();
   ledBlink(); // make sure this stays at the end of the loop
 }

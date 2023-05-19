@@ -1,6 +1,8 @@
 TaskHandle_t task1;
 TaskHandle_t task2;
 
+int num = 1;
+
 void setup() {
   Serial.begin(115200);
   pinMode(LED_BUILTIN, OUTPUT);
@@ -17,13 +19,13 @@ void setup() {
                     serialMessaging,
                     "SERIAL",
                     10000,
-                    NULL,
+                    (void*)&num,
                     1,
                     &task2,
                     1);
 }
 
-void ledBlink(void * pvParameters) {
+void ledBlink(void * parameters) {
   while (true) {
     Serial.println("HIGH");
     digitalWrite(LED_BUILTIN, HIGH);
@@ -34,8 +36,14 @@ void ledBlink(void * pvParameters) {
   }
 }
 
-void serialMessaging(void * pvParameters) {
+void serialMessaging(void * parameters) {
   while (true) {
+    //Serial.println(*((int*)parameters));
+    int temp = *((int*)parameters);
+    Serial.println(temp);
+    temp++;
+    Serial.println(temp);
+    num++;
     Serial.println("W");
     delay(700);
     Serial.println("L");
