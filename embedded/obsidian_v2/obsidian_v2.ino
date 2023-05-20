@@ -13,6 +13,8 @@ Adafruit_BMP3XX bmp; // I2C address 0x77
 SFE_UBLOX_GNSS myGNSS; // I2C address 0x42
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28); // I2C address 0x28
 
+TaskHandle_t task1;
+
 // BMP
 float temperature;
 float altitude;
@@ -71,6 +73,13 @@ const int mosfetPin = 27;
 const int buzPin = 21;
 const int cameraPin = 4;
 
+// Buzzer
+bool buzEnable = false;
+
+// HS Start Condition
+bool hsCondition = false;
+bool hsDeployed = false;
+
 File packet_csv;
 File backup_txt;
 Servo releaseServo;
@@ -82,6 +91,14 @@ void setup() {
   Serial.begin(115200);
   Serial1.begin(9600); // xbee communication
   Wire.begin();
+  xTaskCreatePinnedToCore(
+            preciseTimedFuncs,  /* Task function. */
+            "timedFuncs",       /* name of task. */
+            10000,              /* Stack size of task */
+            NULL,               /* parameter of the task */
+            tskIDLE_PRIORITY,   /* priority of the task */
+            &task1,             /* Task handle to keep track of created task */
+            0);                 /* pin task to core 0 */
 
   // BMP set up
   if (!bmp.begin_I2C()) {
@@ -695,6 +712,83 @@ String packetGenerator(){
     return packet;         
 }
 
+// Core 0 // (Buzzer, LED, Servo)
+void preciseTimedFuncs(void * parameters) {
+  delay(500);
+
+  // Servos are checked while the LED and Buzzer are waiting
+  while (true) {
+    int startTime = millis();
+    int currentTime = millis();
+    bool ledFlip = false;
+    bool buzFlip = false;
+    int ledTime = 1000;
+    int buzTime = 5000;
+    digitalWrite(ledPin, (ledFlip ? LOW : HIGH));
+    ledFlip = !ledFlip;
+    if (buzEnable) {
+      digitalWrite(buzPin, (buzFlip ? LOW : HIGH));
+      buzFlip = !buzFlip;
+    }
+    
+    // Buzzer
+    while (currentTime - startTime <= buzTime) {
+      if (hsCondition && !(hsDeployed)) {
+        break;
+      }
+      
+      // LED
+      if (currentTime - startTime > ledTime) {
+        digitalWrite(ledPin, (ledFlip ? LOW : HIGH));
+
+        ledTime += 1000;
+        ledFlip = !ledFlip;
+      }
+      // Serial.println(currentTime - startTime);
+      currentTime = millis();
+    }
+    digitalWrite(ledPin, LOW);
+    ledFlip = true;
+    if (buzEnable) {
+      digitalWrite(buzPin, (buzFlip ? LOW : HIGH));
+      buzFlip = !buzFlip;
+    }
+    
+    buzTime += buzTime;
+
+    // Buzzer
+    while (currentTime - startTime <= buzTime) {
+      if (hsCondition && !(hsDeployed)) {
+        break;
+      }
+      
+      // LED
+      if (currentTime - startTime > ledTime) {
+        digitalWrite(ledPin, (ledFlip ? LOW : HIGH));
+        ledTime += 1000;
+        ledFlip = !ledFlip;
+      }
+      // Serial.println(currentTime - startTime);
+      currentTime = millis();
+    }
+    digitalWrite(ledPin, HIGH);
+    ledFlip = false;
+    if (buzEnable) {
+      digitalWrite(buzPin, (buzFlip ? LOW : HIGH));
+      buzFlip = !buzFlip;
+    }
+
+    // LED and Buzzer are managed while waiting for HS to deploy
+    if (hsCondition && !(hsDeployed) == true) {
+      startTime = millis();
+      currentTime = millis();
+      // start servo
+      setShieldPosition(2);
+      hsDeployed = true;
+    }
+  }
+}
+
 ///////////////////////////////////// FLIGHT STATE LOOP /////////////////////////////////////
 void loop() {
   
@@ -747,14 +841,14 @@ void loop() {
       pc_deployed = 'C';
 
     } else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1){
-      setShieldPosition(2);
+      hsCondition = true;
       setFlagPosition(1);
       stopRecording();
 
       flightState = "LANDED";
       mast_raised = 'M';
     } else if (flightState == "LANDED"){
-      buzzer();
+      buzEnable = true;
     } else {
       Serial.println("No action required for the cases.");
     }
