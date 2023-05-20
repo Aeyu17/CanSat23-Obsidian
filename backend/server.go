@@ -121,82 +121,82 @@ func reader(conn *websocket.Conn) {
 
 		case "ACTFL0":
 			fmt.Println("ACTFL0 CALLED")
-			if !(Mode == "flight" || Mode == "sim") {
-				fmt.Println("ACTFL0 ignored, turn on flight or sim mode.")
-				continue
-			}
+			// if !(Mode == "flight" || Mode == "sim") {
+			// 	fmt.Println("ACTFL0 ignored, turn on flight or sim mode.")
+			// 	continue
+			// }
 
 			SendPacket("CMD,1070,ACT,FL0\n")
 
 		case "ACTFL1":
 			fmt.Println("ACTFL1 CALLED")
-			if !(Mode == "flight" || Mode == "sim") {
-				fmt.Println("ACTFL1 ignored, turn on flight or sim mode.")
-				continue
-			}
+			// if !(Mode == "flight" || Mode == "sim") {
+			// 	fmt.Println("ACTFL1 ignored, turn on flight or sim mode.")
+			// 	continue
+			// }
 
 			SendPacket("CMD,1070,ACT,FL1\n")
 
 		case "ACTRL0":
 			fmt.Println("ACTRL0 CALLED")
-			if !(Mode == "flight" || Mode == "sim") {
-				fmt.Println("ACTRL0 ignored, turn on flight or sim mode.")
-				continue
-			}
+			// if !(Mode == "flight" || Mode == "sim") {
+			// 	fmt.Println("ACTRL0 ignored, turn on flight or sim mode.")
+			// 	continue
+			// }
 
 			SendPacket("CMD,1070,ACT,RL0\n")
 
 		case "ACTRL1":
 			fmt.Println("ACTRL1 CALLED")
-			if !(Mode == "flight" || Mode == "sim") {
-				fmt.Println("ACTRL1 ignored, turn on flight or sim mode.")
-				continue
-			}
+			// if !(Mode == "flight" || Mode == "sim") {
+			// 	fmt.Println("ACTRL1 ignored, turn on flight or sim mode.")
+			// 	continue
+			// }
 
 			SendPacket("CMD,1070,ACT,RL1\n")
 
 		case "ACTRL2":
 			fmt.Println("ACTRL2 CALLED")
-			if !(Mode == "flight" || Mode == "sim") {
-				fmt.Println("ACTRL2 ignored, turn on flight or sim mode.")
-				continue
-			}
+			// if !(Mode == "flight" || Mode == "sim") {
+			// 	fmt.Println("ACTRL2 ignored, turn on flight or sim mode.")
+			// 	continue
+			// }
 
 			SendPacket("CMD,1070,ACT,RL2\n")
 		
 		case "ACTHS0":
 			fmt.Println("ACTHS0 CALLED")
-			if !(Mode == "flight" || Mode == "sim") {
-				fmt.Println("ACTHS0 ignored, turn on flight or sim mode.")
-				continue
-			}
+			// if !(Mode == "flight" || Mode == "sim") {
+			// 	fmt.Println("ACTHS0 ignored, turn on flight or sim mode.")
+			// 	continue
+			// }
 
 			SendPacket("CMD,1070,ACT,HS0\n")
 
 		case "ACTHS1":
 			fmt.Println("ACTHS1 CALLED")
-			if !(Mode == "flight" || Mode == "sim") {
-				fmt.Println("ACTHS1 ignored, turn on flight or sim mode.")
-				continue
-			}
+			// if !(Mode == "flight" || Mode == "sim") {
+			// 	fmt.Println("ACTHS1 ignored, turn on flight or sim mode.")
+			// 	continue
+			// }
 
 			SendPacket("CMD,1070,ACT,HS1\n")
 
 		case "ACTHS2":
 			fmt.Println("ACTHS2 CALLED")
-			if !(Mode == "flight" || Mode == "sim") {
-				fmt.Println("ACTHS2 ignored, turn on flight or sim mode.")
-				continue
-			}
+			// if !(Mode == "flight" || Mode == "sim") {
+			// 	fmt.Println("ACTHS2 ignored, turn on flight or sim mode.")
+			// 	continue
+			// }
 
 			SendPacket("CMD,1070,ACT,HS2\n")
 
 		case "ACTRES":
 			fmt.Println("ACTRES CALLED")
-			if !(Mode == "flight" || Mode == "sim") {
-				fmt.Println("ACTRES ignored, turn on flight or sim mode.")
-				continue
-			}
+			// if !(Mode == "flight" || Mode == "sim") {
+			// 	fmt.Println("ACTRES ignored, turn on flight or sim mode.")
+			// 	continue
+			// }
 
 			SendPacket("CMD,1070,ACT,RES\n")
 
