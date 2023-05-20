@@ -19,6 +19,7 @@ float altitude;
 float pressure;
 float alt_offset;
 double last_alt;
+bool offset_set;
 
 // SAM
 float latitude;
@@ -105,6 +106,7 @@ void setup() {
     bmp.readAltitude(SEALEVELPRESSURE_HPA);
   
     alt_offset = setDefaultAlt();
+    offset_set = true;
   }
 
   // SAM set up
@@ -503,6 +505,7 @@ void readcommands(String cmd, String cmdarg){
       cmdecho = "SIMA";
       simActive = true;
       flightState = "READY";
+      offset_set = false;
    
     } else {
       Serial.println("Invalid command received.");
@@ -585,13 +588,19 @@ void updateData() {
 
   // BMP
   if (bmpWorking) {
-    if (!(simActive && simEnable))
-    {  
-      pressure = round(bmp.pressure / 100.0)/10.0;
-      last_alt = altitude;
-      altitude = round(10 * (bmp.readAltitude(SEALEVELPRESSURE_HPA) - alt_offset))/10.0;
-    }
     temperature = round(10 * bmp.temperature)/10.0;
+    last_alt = altitude;
+    if (!(simActive && simEnable)) {  
+      pressure = round(bmp.pressure / 100.0)/10.0;
+      altitude = round(10 * (bmp.readAltitude(SEALEVELPRESSURE_HPA) - alt_offset))/10.0;
+    } else {
+      // this formula will kill me
+      altitude = (temperature + 273.15)/(-0.0065) * (pow((pressure*1000)/(SEALEVELPRESSURE_HPA*100), (-8.31432*-0.0065)/(9.80665*0.0289644)) - 1);
+      if (!offset_set) {
+        alt_offset = altitude;
+      }
+    }
+
   }
 
   // SAM
@@ -773,8 +782,7 @@ void loop() {
         cmdarg = itemAt(packet, 3);
       
         if (cmd == "SIMP"){
-          pressure = cmdarg.toFloat()/100; // convert string to float
-          altitude = round(10 * (bmp.readAltitude(pressure)))/10.0;
+          pressure = cmdarg.toFloat()/1000; // convert string to float
           cmdecho = "SIMP";
           Serial.println("SIMP");
           break;
