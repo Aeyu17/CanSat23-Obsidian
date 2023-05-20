@@ -436,9 +436,9 @@ window.onload = function () {
     let flagToggle = document.getElementById("flagToggle");
     flagToggle.addEventListener("change", function (e){
         if (flagToggle.checked){
-            gcsSocket.send("ACTFL0");
-        } else {
             gcsSocket.send("ACTFL1");
+        } else {
+            gcsSocket.send("ACTFL0");
         }
         e.preventDefault();
     });
