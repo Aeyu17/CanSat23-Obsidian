@@ -187,21 +187,39 @@ window.onload = function () {
         e.preventDefault();
     });
 
-    let mrBtn = document.getElementById("mrBtn");
-    mrBtn.addEventListener("click", function (e){
-        gcsSocket.send("ACTMR");
+    let rrBtn = document.getElementById("rrBtn");
+    rrBtn.addEventListener("click", function (e){
+        gcsSocket.send("ACTRL0");
         e.preventDefault();
     });
 
-    let hsBtn = document.getElementById("hsBtn");
-    hsBtn.addEventListener("click", function (e){
-        gcsSocket.send("ACTHS");
+    let crBtn = document.getElementById("crBtn");
+    crBtn.addEventListener("click", function (e){
+        gcsSocket.send("ACTRL1");
         e.preventDefault();
     });
 
     let pcBtn = document.getElementById("pcBtn");
     pcBtn.addEventListener("click", function (e){
-        gcsSocket.send("ACTPC");
+        gcsSocket.send("ACTRL2");
+        e.preventDefault();
+    });
+
+    let hscBtn = document.getElementById("hscBtn");
+    hscBtn.addEventListener("click", function (e){
+        gcsSocket.send("ACTHS0");
+        e.preventDefault();
+    });
+
+    let hsoBtn = document.getElementById("hsoBtn");
+    hsoBtn.addEventListener("click", function (e){
+        gcsSocket.send("ACTHS1");
+        e.preventDefault();
+    });
+
+    let upBtn = document.getElementById("upBtn");
+    upBtn.addEventListener("click", function (e){
+        gcsSocket.send("ACTHS2");
         e.preventDefault();
     });
 
@@ -387,9 +405,9 @@ window.onload = function () {
         e.preventDefault();
     });
 
-    let resetReleaseBtn = document.getElementById("relResetBtn");
-    resetReleaseBtn.addEventListener("click", function (e){
-        gcsSocket.send("RESREL");
+    let resetMechBtn = document.getElementById("resetMechBtn");
+    resetMechBtn.addEventListener("click", function (e){
+        gcsSocket.send("ACTRES");
         e.preventDefault();
     });
 
@@ -411,6 +429,16 @@ window.onload = function () {
         } else {
             simMode = false;
             gcsSocket.send("SIMD");
+        }
+        e.preventDefault();
+    });
+
+    let flagToggle = document.getElementById("flagToggle");
+    flagToggle.addEventListener("change", function (e){
+        if (flagToggle.checked){
+            gcsSocket.send("ACTFL0");
+        } else {
+            gcsSocket.send("ACTFL1");
         }
         e.preventDefault();
     });

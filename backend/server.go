@@ -119,32 +119,86 @@ func reader(conn *websocket.Conn) {
 
 			SendPacket("CMD,1070,CAL\n")
 
-		case "ACTMR":
-			fmt.Println("ACTMR CALLED")
+		case "ACTFL0":
+			fmt.Println("ACTFL0 CALLED")
 			if !(Mode == "flight" || Mode == "sim") {
-				fmt.Println("ACTMR ignored, turn on flight or sim mode.")
+				fmt.Println("ACTFL0 ignored, turn on flight or sim mode.")
 				continue
 			}
 
-			SendPacket("CMD,1070,ACT,MR\n")
-			
-		case "ACTHS":
-			fmt.Println("ACTHS CALLED")
+			SendPacket("CMD,1070,ACT,FL0\n")
+
+		case "ACTFL1":
+			fmt.Println("ACTFL1 CALLED")
 			if !(Mode == "flight" || Mode == "sim") {
-				fmt.Println("ACTHS ignored, turn on flight or sim mode.")
+				fmt.Println("ACTFL1 ignored, turn on flight or sim mode.")
 				continue
 			}
 
-			SendPacket("CMD,1070,ACT,HS\n")
+			SendPacket("CMD,1070,ACT,FL1\n")
 
-		case "ACTPC":
-			fmt.Println("ACTPC CALLED")
+		case "ACTRL0":
+			fmt.Println("ACTRL0 CALLED")
 			if !(Mode == "flight" || Mode == "sim") {
-				fmt.Println("ACTPC ignored, turn on flight or sim mode.")
+				fmt.Println("ACTRL0 ignored, turn on flight or sim mode.")
 				continue
 			}
 
-			SendPacket("CMD,1070,ACT,PC\n")
+			SendPacket("CMD,1070,ACT,RL0\n")
+
+		case "ACTRL1":
+			fmt.Println("ACTRL1 CALLED")
+			if !(Mode == "flight" || Mode == "sim") {
+				fmt.Println("ACTRL1 ignored, turn on flight or sim mode.")
+				continue
+			}
+
+			SendPacket("CMD,1070,ACT,RL1\n")
+
+		case "ACTRL2":
+			fmt.Println("ACTRL2 CALLED")
+			if !(Mode == "flight" || Mode == "sim") {
+				fmt.Println("ACTRL2 ignored, turn on flight or sim mode.")
+				continue
+			}
+
+			SendPacket("CMD,1070,ACT,RL2\n")
+		
+		case "ACTHS0":
+			fmt.Println("ACTHS0 CALLED")
+			if !(Mode == "flight" || Mode == "sim") {
+				fmt.Println("ACTHS0 ignored, turn on flight or sim mode.")
+				continue
+			}
+
+			SendPacket("CMD,1070,ACT,HS0\n")
+
+		case "ACTHS1":
+			fmt.Println("ACTHS1 CALLED")
+			if !(Mode == "flight" || Mode == "sim") {
+				fmt.Println("ACTHS1 ignored, turn on flight or sim mode.")
+				continue
+			}
+
+			SendPacket("CMD,1070,ACT,HS1\n")
+
+		case "ACTHS2":
+			fmt.Println("ACTHS2 CALLED")
+			if !(Mode == "flight" || Mode == "sim") {
+				fmt.Println("ACTHS2 ignored, turn on flight or sim mode.")
+				continue
+			}
+
+			SendPacket("CMD,1070,ACT,HS2\n")
+
+		case "ACTRES":
+			fmt.Println("ACTRES CALLED")
+			if !(Mode == "flight" || Mode == "sim") {
+				fmt.Println("ACTRES ignored, turn on flight or sim mode.")
+				continue
+			}
+
+			SendPacket("CMD,1070,ACT,RES\n")
 
 		case "ACTAB":
 			fmt.Println("ACTAB CALLED")
@@ -163,14 +217,6 @@ func reader(conn *websocket.Conn) {
 			}
 
 			SendPacket("CMD,1070,ACT,LED\n")
-
-		case "RESREL":
-			fmt.Println("RESREL CALLED")
-			if !(Mode == "flight" || Mode == "sim") {
-				fmt.Println("RESREL ignored, turn on flight or sim mode.")
-				continue
-			}
-			SendPacket("CMD,1070,RESREL\n")
 
 		case "PING":
 			fmt.Println("PING CALLED")
