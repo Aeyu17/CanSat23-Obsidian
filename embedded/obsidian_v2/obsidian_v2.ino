@@ -42,7 +42,7 @@ float voltage;
 String missionTime = "00:00:00";
 int packetCount = 0;
 char flightMode = 'F';
-String flightState = "READY"; // READY IF TESTING ON ITS OWN, IDLE IF TESTING XBEES
+String flightState = "IDLE"; // READY IF TESTING ON ITS OWN, IDLE IF TESTING XBEES
 char hs_deployed = 'N';
 char pc_deployed = 'N';
 char mast_raised = 'N';
@@ -598,6 +598,8 @@ void updateData() {
       altitude = (temperature + 273.15)/(-0.0065) * (pow((pressure*1000)/(SEALEVELPRESSURE_HPA*100), (-8.31432*-0.0065)/(9.80665*0.0289644)) - 1);
       if (!offset_set) {
         alt_offset = altitude;
+        altitude = 0;
+        offset_set = true;
       }
     }
 
