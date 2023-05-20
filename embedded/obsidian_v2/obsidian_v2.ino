@@ -390,15 +390,15 @@ void stopRecording() {
 }
  
 void ledBlink(){
-  pinMode(ledPin,HIGH);
+  digitalWrite(ledPin,HIGH);
   delay(100);
-  pinMode(ledPin,LOW);
+  digitalWrite(ledPin,LOW);
 }
 
 void buzzer(){
-  pinMode(buzPin,HIGH);
+  digitalWrite(buzPin,HIGH);
   delay(500);
-  pinMode(buzPin,LOW);
+  digitalWrite(buzPin,LOW);
 }
 
 ///////////////////////////////////// COMMAND READING /////////////////////////////////////
@@ -612,7 +612,7 @@ void updateData() {
   }
 
   // ADC Voltage
-  voltage = analogRead(39)*(3.3/16384);
+  voltage = analogRead(13)*(3.3/512);
 
   // Mission Time
   int dtime = round(millis()/1000);
@@ -786,6 +786,5 @@ void loop() {
     }
   }
 
-  buzzer();
   ledBlink(); // make sure this stays at the end of the loop
 }
