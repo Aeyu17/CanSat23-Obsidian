@@ -247,7 +247,7 @@ func reader(conn *websocket.Conn) {
 				case p := <- pingChannel:
 					if p != "Empty" {
 						duration := time.Since(start)
-						fmt.Println("Pong! " + strconv.FormatInt(duration.Milliseconds(), 5))
+						fmt.Println("Pong! " + strconv.FormatInt(duration.Milliseconds(), 5) + "ms")
 						flag = false
 					}
 				}
