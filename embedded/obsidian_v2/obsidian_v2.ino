@@ -532,7 +532,7 @@ void readcommands(String cmd, String cmdarg){
     cmdecho = "CAL";
     alt_offset = setDefaultAlt();
 
-  } else if (cmd == "ACT"){ // NOT DONE
+  } else if (cmd == "ACT"){
     if (cmdarg == "AB\n") {
       Serial.println("ACTAB");
       cmdecho = "ACTAB";
@@ -543,42 +543,42 @@ void readcommands(String cmd, String cmdarg){
       cmdecho = "ACTLED";
       ledBlink();
 
-    } else if (cmdarg == "FL0\n") { // not done
+    } else if (cmdarg == "FL0\n") {
       Serial.println("ACTFL0");
       cmdecho = "ACTFL0";
       setFlagPosition(0);
 
-    } else if (cmdarg == "FL1\n") { // not done
+    } else if (cmdarg == "FL1\n") {
       Serial.println("ACTFL1");
       cmdecho = "ACTFL1";
       setFlagPosition(1);
 
-    } else if (cmdarg == "RL0\n") { // not done
+    } else if (cmdarg == "RL0\n") {
       Serial.println("ACTRL0");
       cmdecho = "ACTRL0";
       setReleasePosition(0);
 
-    } else if (cmdarg == "RL1\n") { // not done
+    } else if (cmdarg == "RL1\n") {
       Serial.println("ACTRL1");
       cmdecho = "ACTRL1";
       setReleasePosition(1);
       
-    } else if (cmdarg == "RL2\n") { // not done
+    } else if (cmdarg == "RL2\n") {
       Serial.println("ACTRL2");
       cmdecho = "ACTRL2";
       setReleasePosition(2);
 
-    } else if (cmdarg == "HS0\n") { // not done
+    } else if (cmdarg == "HS0\n") {
       Serial.println("ACTHS0");
       cmdecho = "ACTHS0";
       setShieldPosition(0);
 
-    } else if (cmdarg == "HS1\n") { // not done
+    } else if (cmdarg == "HS1\n") {
       Serial.println("ACTHS1");
       cmdecho = "ACTHS1";
       setShieldPosition(1);
 
-    } else if (cmdarg == "HS2\n") { // not done
+    } else if (cmdarg == "HS2\n") {
       Serial.println("ACTHS2");
       cmdecho = "ACTHS2";
       setShieldPosition(2);
@@ -589,6 +589,9 @@ void readcommands(String cmd, String cmdarg){
       setFlagPosition(0);
       setReleasePosition(0);
       setShieldPosition(0);
+      hs_deployed = 'N';
+      pc_deployed = 'N';
+      mast_raised = 'N';
 
     } else {
       Serial.println("Invalid command received.");
@@ -635,8 +638,8 @@ void updateData() {
   if (bnoWorking) {
     sensors_event_t event;
     bno.getEvent(&event);
-    tiltx = 90 - (float)event.orientation.y;
-    tilty = 180 - (float)event.orientation.z;  
+    tiltx = (float)event.orientation.z;
+    tilty = 90 - (float)event.orientation.y;  
   }
 
   // ADC Voltage
