@@ -4,12 +4,6 @@ void setup() {
   Serial.begin(115200); 
 
   pinMode(trig, OUTPUT);         
-
-  startRecording();
-  delay(10000);
-  stopRecording();
-
-
 }
 
 void startRecording() {
@@ -30,4 +24,9 @@ void stopRecording() {
   Serial.println("Recording stopped.");
 }
 
-void loop(){;}
+void loop(){
+  startRecording();
+  delay(10000);
+  stopRecording();
+  
+}

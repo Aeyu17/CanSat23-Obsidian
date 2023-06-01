@@ -396,6 +396,14 @@ void startRecording() {
   delay(1000);
   digitalWrite(cameraPin, HIGH);
   Serial.println("Recording started.");
+  
+  delay(1000);
+  
+  Serial.println("Recording...");
+  digitalWrite(cameraPin, LOW); 
+  delay(1000);
+  digitalWrite(cameraPin, HIGH);
+  Serial.println("Recording started.");
 }
 
 void stopRecording() {
@@ -523,6 +531,7 @@ void readcommands(String cmd, String cmdarg){
       simActive = true;
       flightState = "READY";
       offset_set = false;
+      alt_offset = 0;
    
     } else {
       Serial.println("Invalid command received.");
@@ -607,22 +616,25 @@ void updateData() {
    */
 
   // BMP
-  if (bmpWorking) {
+   if (bmpWorking) {
     temperature = round(10 * bmp.temperature)/10.0;
     last_alt = altitude;
     if (!(simActive && simEnable)) {  
       pressure = round(bmp.pressure / 100.0)/10.0;
       altitude = round(10 * (bmp.readAltitude(SEALEVELPRESSURE_HPA) - alt_offset))/10.0;
-    } else {
+    } else if (pressure != 0) {
       // this formula will kill me
-      altitude = (temperature + 273.15)/(-0.0065) * (pow((pressure*1000)/(SEALEVELPRESSURE_HPA*100), (-8.31432*-0.0065)/(9.80665*0.0289644)) - 1);
+      altitude = (temperature + 273.15)/(-0.0065) * (pow(((pressure*1000)/(SEALEVELPRESSURE_HPA*100)), ((-8.31432*-0.0065)/(9.80665*0.0289644))) - 1) - alt_offset;
+      Serial.println("SIMP altitude: " + String(altitude));
       if (!offset_set) {
         alt_offset = altitude;
-        altitude = 0;
+        Serial.println("SIMP alt_offset: " + String(alt_offset));
+        altitude = altitude - alt_offset;
         offset_set = true;
       }
+    } else {
+      altitude = 0;
     }
-
   }
 
   // SAM
