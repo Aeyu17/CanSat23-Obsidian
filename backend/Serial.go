@@ -111,6 +111,7 @@ func SendPacket(data string) {
 	_, err := SerialPort.Write([]byte(data))
 	if err != nil {
 		log.Println(err)
+		<- serialSem
 		return
 	}
 	time.Sleep(time.Second)
