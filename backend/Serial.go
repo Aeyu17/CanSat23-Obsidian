@@ -114,6 +114,6 @@ func SendPacket(data string) {
 		<- serialSem
 		return
 	}
-	time.Sleep(time.Second)
+	time.Sleep(time.Second*2)
 	<- serialSem
 }
