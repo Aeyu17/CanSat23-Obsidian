@@ -12,7 +12,6 @@
 Adafruit_BMP3XX bmp; // I2C address 0x77
 SFE_UBLOX_GNSS myGNSS; // I2C address 0x42
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28); // I2C address 0x28
-
 TaskHandle_t task1;
 
 // BMP
@@ -76,9 +75,9 @@ const int cameraPin = 4;
 // Buzzer
 bool buzEnable = false;
 
-// HS
-int hsPhase = -1;
-bool hsCommandFlag = false;
+// HS Start Condition
+bool hsCondition = false;
+bool hsDeployed = false;
 
 File packet_csv;
 File backup_txt;
@@ -299,21 +298,6 @@ void debugPrintData(){
   Serial.println("-------------------------");
 }
 
-bool checkHSCondition() {
-  if (flightState == "DESCENDING" && altitude <= 500){
-    return true;
-
-  } else if (flightState == "HSDEPLOYED" && altitude <= 200){
-    return true;
-
-  } else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1){
-    return true;
-    
-  } else {
-    return false;
-  }
-}
-
 ///////////////////////////////////// MECHANISMS /////////////////////////////////////
 void setFlagPosition(int pos) {
   // 0 lowers the flag, 1 raises the flag
@@ -430,7 +414,7 @@ void stopRecording() {
   digitalWrite(cameraPin, LOW);
   Serial.println("Recording stopped.");
 }
-
+ 
 void ledBlink(){
   digitalWrite(ledPin,HIGH);
   delay(100);
@@ -745,21 +729,15 @@ String packetGenerator(){
 // Core 0 // (Buzzer, LED, Servo)
 void preciseTimedFuncs(void * parameters) {
   delay(500);
-  int startTime = millis();
-  int currentTime = millis();
-  bool ledFlip = false;
-  bool buzFlip = false;
-  int ledTime = 1000;
-  int buzTime = 5000;
-  
+
   // Servos are checked while the LED and Buzzer are waiting
   while (true) {
-    startTime = millis();
-    currentTime = millis();
-    ledFlip = false;
-    buzFlip = false;
-    ledTime = 1000;
-    buzTime = 5000;
+    int startTime = millis();
+    int currentTime = millis();
+    bool ledFlip = false;
+    bool buzFlip = false;
+    int ledTime = 1000;
+    int buzTime = 5000;
     digitalWrite(ledPin, (ledFlip ? LOW : HIGH));
     ledFlip = !ledFlip;
     if (buzEnable) {
@@ -769,7 +747,7 @@ void preciseTimedFuncs(void * parameters) {
     
     // Buzzer
     while (currentTime - startTime <= buzTime) {
-      if (checkHSCondition()) {
+      if (hsCondition && !(hsDeployed)) {
         break;
       }
       
@@ -794,7 +772,7 @@ void preciseTimedFuncs(void * parameters) {
 
     // Buzzer
     while (currentTime - startTime <= buzTime) {
-      if (checkHSCondition()) {
+      if (hsCondition && !(hsDeployed)) {
         break;
       }
       
@@ -814,15 +792,13 @@ void preciseTimedFuncs(void * parameters) {
       buzFlip = !buzFlip;
     }
 
-    // Handle HS
-    if (flightState == "DESCENDING" && altitude <= 500 && (panelPosition != 1)){  // overrides whatever hs position was set last
-      setShieldPosition(1);
-
-    } else if (flightState == "HSDEPLOYED" && altitude <= 200 && (panelPosition == 1 && panelPosition != 0)){
-      setShieldPosition(0);
-  
-    } else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1 && (panelPosition == 0 && panelPosition != 2)){
+    // LED and Buzzer are managed while waiting for HS to deploy
+    if (hsCondition && !(hsDeployed) == true) {
+      startTime = millis();
+      currentTime = millis();
+      // start servo
       setShieldPosition(2);
+      hsDeployed = true;
     }
   }
 }
@@ -868,15 +844,18 @@ void loop() {
 
     } else if (flightState == "DESCENDING" && altitude <= 500){
       setReleasePosition(1);
+      setShieldPosition(1);
       flightState = "HSDEPLOYED";
       hs_deployed = 'P';
 
     } else if (flightState == "HSDEPLOYED" && altitude <= 200){
       setReleasePosition(2);
+      setShieldPosition(0);
       flightState = "PCDEPLOYED";
       pc_deployed = 'C';
 
     } else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1){
+      hsCondition = true;
       setFlagPosition(1);
       stopRecording();
 
@@ -894,8 +873,8 @@ void loop() {
   }
 
   if (!(simActive and simEnable) and Serial1.available()) {
-    String packet = Serial1.readString();
-    Serial.print(packet);
+      String packet = Serial1.readString();
+      Serial.print(packet);
   
     if (itemAt(packet, 0) == "CMD" and itemAt(packet, 1) == "1070") {
       readcommands(itemAt(packet, 2), itemAt(packet, 3)); 
@@ -905,8 +884,12 @@ void loop() {
   else if (simActive and simEnable){
     while (true){
       while (!Serial1.available()){;}
-      String packet = Serial1.readString();
-      Serial.print(packet);
+//        String packet = Serial1.readString();
+//        Serial.print(packet);
+      
+        String packet = Serial1.readStringUntil('\n');
+        packet = packet + "\n";
+        Serial.println(packet);
     
       if (itemAt(packet,0) == "CMD" && itemAt(packet, 1) == "1070"){
         cmd = itemAt(packet, 2);
