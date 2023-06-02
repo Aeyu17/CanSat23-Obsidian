@@ -12,7 +12,6 @@
 Adafruit_BMP3XX bmp; // I2C address 0x77
 SFE_UBLOX_GNSS myGNSS; // I2C address 0x42
 Adafruit_BNO055 bno = Adafruit_BNO055(55, 0x28); // I2C address 0x28
-
 TaskHandle_t task1;
 
 // BMP
@@ -874,8 +873,8 @@ void loop() {
   }
 
   if (!(simActive and simEnable) and Serial1.available()) {
-    String packet = Serial1.readString();
-    Serial.print(packet);
+      String packet = Serial1.readString();
+      Serial.print(packet);
   
     if (itemAt(packet, 0) == "CMD" and itemAt(packet, 1) == "1070") {
       readcommands(itemAt(packet, 2), itemAt(packet, 3)); 
@@ -885,8 +884,23 @@ void loop() {
   else if (simActive and simEnable){
     while (true){
       while (!Serial1.available()){;}
-      String packet = Serial1.readString();
-      Serial.print(packet);
+        String packet = "";
+        char ch = Serial1.read();
+    
+        while (ch != '\n'){
+          packet = packet + String(ch);
+          ch = Serial1.read();
+        }
+      
+        if (ch == '\n'){
+            packet = packet + String(ch);
+        }
+        
+        Serial.print(packet);
+      
+//        String packet = Serial1.readStringUntil('\n');
+//        packet = packet + "\n";
+//        Serial.print(packet);
     
       if (itemAt(packet,0) == "CMD" && itemAt(packet, 1) == "1070"){
         cmd = itemAt(packet, 2);
