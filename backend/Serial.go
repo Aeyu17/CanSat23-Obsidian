@@ -10,7 +10,7 @@ import (
 	"go.bug.st/serial/enumerator"
 )
  
-const BAUD = 9600
+const BAUD = 115200
 var (
 	Port string;
 	SerialPort = InitPort(BAUD)
