@@ -87,8 +87,8 @@ Servo panelServo;
 
 ///////////////////////////////////// SETUP /////////////////////////////////////
 void setup() {  
-  Serial.begin(115200);
-  Serial1.begin(9600); // xbee communication
+  Serial.begin(9600);
+  Serial1.begin(115200); // xbee communication
   Wire.begin();
   xTaskCreatePinnedToCore(
             preciseTimedFuncs,  /* Task function. */
@@ -887,7 +887,7 @@ void loop() {
       while (!Serial1.available()){;}
 //        String packet = Serial1.readString();
 //        Serial.print(packet);
-  // jj    
+    
         String packet = Serial1.readStringUntil('\n');
         packet = packet + "\n";
         Serial.print(packet);
