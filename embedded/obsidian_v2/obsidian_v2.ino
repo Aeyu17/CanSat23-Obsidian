@@ -79,6 +79,9 @@ bool buzEnable = false;
 int hsPhase = -1;
 bool hsCommandFlag = false;
 
+// Cam
+bool recording = false;
+
 File packet_csv;
 File backup_txt;
 Servo releaseServo;
@@ -813,6 +816,17 @@ void preciseTimedFuncs(void * parameters) {
       buzFlip = !buzFlip;
     }
 
+    // Handle Cam
+    if ((flightState == "ASCENDING" && altitude > 200 && altitude - last_alt < 0) && !(recording)) {
+      startRecording();
+      recording = true;
+      
+    } else if ((flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1) && recording) {
+      stopRecording();
+      recording = false;
+    }
+    
+    
     // Handle HS
     if (flightState == "DESCENDING" && altitude <= 500 && (panelPosition != 1)){  // overrides whatever hs position was set last
       setShieldPosition(1);
@@ -862,7 +876,6 @@ void loop() {
       flightState = "ASCENDING";
 
     } else if (flightState == "ASCENDING" && altitude > 200 && altitude - last_alt < 0){
-      startRecording();
       flightState = "DESCENDING";
 
     } else if (flightState == "DESCENDING" && altitude <= 500){
@@ -877,7 +890,6 @@ void loop() {
 
     } else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1){
       setFlagPosition(1);
-      stopRecording();
 
       flightState = "LANDED";
       mast_raised = 'M';
