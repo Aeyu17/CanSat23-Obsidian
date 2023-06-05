@@ -75,9 +75,9 @@ const int cameraPin = 4;
 // Buzzer
 bool buzEnable = false;
 
-// HS Start Condition
-bool hsCondition = false;
-bool hsDeployed = false;
+// HS
+int hsPhase = -1;
+bool hsCommandFlag = false;
 
 File packet_csv;
 File backup_txt;
@@ -296,6 +296,21 @@ void debugPrintData(){
   Serial.println("Voltage: " + (String)voltage);
 
   Serial.println("-------------------------");
+}
+
+bool checkHSCondition() {
+  if (flightState == "DESCENDING" && altitude <= 500){
+    return true;
+
+  } else if (flightState == "HSDEPLOYED" && altitude <= 200){
+    return true;
+
+  } else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1){
+    return true;
+    
+  } else {
+    return false;
+  }
 }
 
 ///////////////////////////////////// MECHANISMS /////////////////////////////////////
@@ -729,15 +744,21 @@ String packetGenerator(){
 // Core 0 // (Buzzer, LED, Servo)
 void preciseTimedFuncs(void * parameters) {
   delay(500);
-
+  int startTime = millis();
+  int currentTime = millis();
+  bool ledFlip = false;
+  bool buzFlip = false;
+  int ledTime = 1000;
+  int buzTime = 5000;
+  
   // Servos are checked while the LED and Buzzer are waiting
   while (true) {
-    int startTime = millis();
-    int currentTime = millis();
-    bool ledFlip = false;
-    bool buzFlip = false;
-    int ledTime = 1000;
-    int buzTime = 5000;
+    startTime = millis();
+    currentTime = millis();
+    ledFlip = false;
+    buzFlip = false;
+    ledTime = 1000;
+    buzTime = 5000;
     digitalWrite(ledPin, (ledFlip ? LOW : HIGH));
     ledFlip = !ledFlip;
     if (buzEnable) {
@@ -747,7 +768,7 @@ void preciseTimedFuncs(void * parameters) {
     
     // Buzzer
     while (currentTime - startTime <= buzTime) {
-      if (hsCondition && !(hsDeployed)) {
+      if (checkHSCondition()) {
         break;
       }
       
@@ -772,7 +793,7 @@ void preciseTimedFuncs(void * parameters) {
 
     // Buzzer
     while (currentTime - startTime <= buzTime) {
-      if (hsCondition && !(hsDeployed)) {
+      if (checkHSCondition()) {
         break;
       }
       
@@ -792,13 +813,15 @@ void preciseTimedFuncs(void * parameters) {
       buzFlip = !buzFlip;
     }
 
-    // LED and Buzzer are managed while waiting for HS to deploy
-    if (hsCondition && !(hsDeployed) == true) {
-      startTime = millis();
-      currentTime = millis();
-      // start servo
+    // Handle HS
+    if (flightState == "DESCENDING" && altitude <= 500 && (panelPosition != 1)){  // overrides whatever hs position was set last
+      setShieldPosition(1);
+
+    } else if (flightState == "HSDEPLOYED" && altitude <= 200 && (panelPosition == 1 && panelPosition != 0)){
+      setShieldPosition(0);
+  
+    } else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1 && (panelPosition == 0 && panelPosition != 2)){
       setShieldPosition(2);
-      hsDeployed = true;
     }
   }
 }
