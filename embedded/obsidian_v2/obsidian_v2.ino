@@ -867,18 +867,15 @@ void loop() {
 
     } else if (flightState == "DESCENDING" && altitude <= 500){
       setReleasePosition(1);
-      setShieldPosition(1);
       flightState = "HSDEPLOYED";
       hs_deployed = 'P';
 
     } else if (flightState == "HSDEPLOYED" && altitude <= 200){
       setReleasePosition(2);
-      setShieldPosition(0);
       flightState = "PCDEPLOYED";
       pc_deployed = 'C';
 
     } else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1){
-      hsCondition = true;
       setFlagPosition(1);
       stopRecording();
 
