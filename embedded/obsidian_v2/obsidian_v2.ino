@@ -656,8 +656,8 @@ void updateData() {
 
   // SAM
   if (samWorking) {
-    latitude = myGNSS.getLatitude()/10000000.0;
-    longitude = myGNSS.getLongitude()/10000000.0;
+    latitude = round((myGNSS.getLatitude()/10000000.0)*10000)/10000;
+    longitude = round((myGNSS.getLongitude()/10000000.0)*10000)/10000;
     gps_altitude = myGNSS.getAltitude()/1000.0;
     siv = myGNSS.getSIV();
     gps_time = (String)myGNSS.getHour() + ":" + (String)myGNSS.getMinute() + ":" + (String)myGNSS.getSecond();
@@ -672,7 +672,7 @@ void updateData() {
   }
 
   // ADC Voltage
-  voltage = analogRead(13)*(3.3/512);
+  voltage = round((analogRead(13)*(3.3/512))*10)/10;
 
   // Mission Time
   int dtime = round(millis()/1000);
