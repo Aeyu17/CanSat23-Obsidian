@@ -148,6 +148,7 @@ void setup() {
     Serial.println("SAM WORKING");
     myGNSS.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
     myGNSS.saveConfigSelective(VAL_CFG_SUBSEC_IOPORT); //Save (only) the communications port settings to flash and BBR
+    myGNSS.setMeasurementRate(125); // Set sampling rate of the GNSS
     
     startHour = myGNSS.getHour();
     startMinute = myGNSS.getMinute();
@@ -301,7 +302,8 @@ void debugPrintData(){
   Serial.println("-------------------------");
 }
 
-bool checkHSCondition() {
+// Used for Core 0 processes
+bool checkBreakCondition() {
   if (flightState == "DESCENDING" && altitude <= 500){
     return true;
 
@@ -310,6 +312,9 @@ bool checkHSCondition() {
 
   } else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1){
     return true;
+
+  } else if (flightState == "ASCENDING" && altitude > 200 && altitude - last_alt < 0){
+    return true; 
     
   } else {
     return false;
@@ -363,8 +368,13 @@ void setShieldPosition(int pos) {
 
   digitalWrite(mosfetPin, HIGH);
   delay(250);
-
-  if (pos > panelPosition) { // heat shield needs to open
+  
+  // Shield Override for ACTRES command
+  if (pos == -1) {
+    panelServo.write(50);
+    delay(3000);
+    
+  } else if (pos > panelPosition) { // heat shield needs to open
     panelServo.write(130);
 
     if (panelPosition == 0 && pos == 1) {
@@ -401,7 +411,9 @@ void setShieldPosition(int pos) {
 
     }
   }
-  panelPosition = pos;
+  if (pos != -1) {
+    panelPosition = pos;
+  }
   panelServo.write(93);
 
   digitalWrite(mosfetPin, LOW);
@@ -597,7 +609,7 @@ void readcommands(String cmd, String cmdarg){
     } else if (cmdarg == "HS0\n") {
       Serial.println("ACTHS0");
       cmdecho = "ACTHS0";
-      setShieldPosition(0);
+      setShieldPosition(-1);
 
     } else if (cmdarg == "HS1\n") {
       Serial.println("ACTHS1");
@@ -771,7 +783,7 @@ void preciseTimedFuncs(void * parameters) {
     
     // Buzzer
     while (currentTime - startTime <= buzTime) {
-      if (checkHSCondition()) {
+      if (checkBreakCondition()) {
         break;
       }
       
@@ -796,7 +808,7 @@ void preciseTimedFuncs(void * parameters) {
 
     // Buzzer
     while (currentTime - startTime <= buzTime) {
-      if (checkHSCondition()) {
+      if (checkBreakCondition()) {
         break;
       }
       
@@ -826,7 +838,6 @@ void preciseTimedFuncs(void * parameters) {
       recording = false;
     }
     
-    
     // Handle HS
     if (flightState == "DESCENDING" && altitude <= 500 && (panelPosition != 1)){  // overrides whatever hs position was set last
       setShieldPosition(1);
@@ -842,6 +853,7 @@ void preciseTimedFuncs(void * parameters) {
 
 ///////////////////////////////////// FLIGHT STATE LOOP /////////////////////////////////////
 void loop() {
+  // int startTime = millis();
   
   if (sdWorking){
     packet_csv = SD.open("/testlaunchdata.csv", FILE_APPEND);
@@ -940,7 +952,7 @@ void loop() {
       }
     }
   }
-
-  ledBlink(); // make sure this stays at the end of the loop
+  
+  // ledBlink(); // make sure this stays at the end of the loop
   // for john <3
 }
