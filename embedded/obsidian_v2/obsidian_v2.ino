@@ -82,6 +82,9 @@ bool hsCommandFlag = false;
 // Cam
 bool recording = false;
 
+// Data Rate
+bool dataFlip = false;
+
 File packet_csv;
 File backup_txt;
 Servo releaseServo;
@@ -853,7 +856,7 @@ void preciseTimedFuncs(void * parameters) {
 
 ///////////////////////////////////// FLIGHT STATE LOOP /////////////////////////////////////
 void loop() {
-  // int startTime = millis();
+  int startTime = millis();
   
   if (sdWorking){
     packet_csv = SD.open("/testlaunchdata.csv", FILE_APPEND);
@@ -878,10 +881,24 @@ void loop() {
   if (flightState != "IDLE") {
     String packet = packetGenerator();
 
-    if (sdWorking){
-      writeToFile(packet, packet_csv);
+    // Print data every other time for telemetry | Print data every time for SIM
+    if (simActive and simEnable){
+      if (sdWorking){
+        writeToFile(packet, packet_csv);
+      }
+      Serial1.print(packet);
     }
-    Serial1.print(packet);
+    else if (dataFlip) {
+      if (sdWorking){
+        writeToFile(packet, packet_csv);
+      }
+      Serial1.print(packet);
+      dataFlip = !dataFlip;
+    }
+    else {
+      dataFlip = !dataFlip;
+    }
+    
     debugPrintData();
     
     if (flightState == "READY" && altitude >= 50){
@@ -917,9 +934,9 @@ void loop() {
   }
 
   if (!(simActive and simEnable) and Serial1.available()) {
-      String packet = Serial1.readStringUntil('\n');
-      packet = packet + "\n";
-      Serial.print(packet);
+    String packet = Serial1.readStringUntil('\n');
+    packet = packet + "\n";
+    Serial.print(packet);
   
     if (itemAt(packet, 0) == "CMD" and itemAt(packet, 1) == "1070") {
       readcommands(itemAt(packet, 2), itemAt(packet, 3)); 
@@ -935,7 +952,7 @@ void loop() {
         String packet = Serial1.readStringUntil('\n');
         packet = packet + "\n";
         Serial.print(packet);
-    
+      
       if (itemAt(packet,0) == "CMD" && itemAt(packet, 1) == "1070"){
         cmd = itemAt(packet, 2);
         cmdarg = itemAt(packet, 3);
@@ -952,6 +969,11 @@ void loop() {
       }
     }
   }
+
+//  Serial.println();
+//  Serial.print("Time check   :   ");
+//  Serial.println(millis() - startTime);
+//  Serial.println();
   
   // ledBlink(); // make sure this stays at the end of the loop
   // for john <3
