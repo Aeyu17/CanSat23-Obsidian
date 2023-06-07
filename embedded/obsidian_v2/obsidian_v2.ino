@@ -238,6 +238,7 @@ void setup() {
 
   // Camera set up
   pinMode(cameraPin, OUTPUT);
+  startRecording();
 
   // LED set up
   pinMode(ledPin,OUTPUT);
@@ -376,11 +377,7 @@ void setShieldPosition(int pos) {
   delay(250);
   
   // Shield Override for ACTRES command
-  if (pos == -1) {
-    panelServo.write(50);
-    delay(3000);
-    
-  } else if (pos > panelPosition) { // heat shield needs to open
+  if (pos > panelPosition) { // heat shield needs to open
     panelServo.write(130);
 
     if (panelPosition == 0 && pos == 1) {
@@ -402,10 +399,10 @@ void setShieldPosition(int pos) {
     panelServo.write(50);
 
     if (panelPosition == 2 && pos == 1) {
-      delay(12000);
+      delay(10000);
 
     } else if (panelPosition == 2 && pos == 0) {
-      delay(12000);
+      delay(11000);
 
     } else if (panelPosition == 1 && pos == 0) {
       delay(4000);
@@ -417,9 +414,7 @@ void setShieldPosition(int pos) {
 
     }
   }
-  if (pos != -1) {
-    panelPosition = pos;
-  }
+  panelPosition = pos;
   panelServo.write(93);
 
   digitalWrite(mosfetPin, LOW);
@@ -616,7 +611,7 @@ void readcommands(String cmd, String cmdarg){
     } else if (cmdarg == "HS0\n") {
       Serial.println("ACTHS0");
       cmdecho = "ACTHS0";
-      setShieldPosition(-1);
+      setShieldPosition(0);
 
     } else if (cmdarg == "HS1\n") {
       Serial.println("ACTHS1");
@@ -836,17 +831,6 @@ void preciseTimedFuncs(void * parameters) {
       digitalWrite(buzPin, (buzFlip ? LOW : HIGH));
       buzFlip = !buzFlip;
     }
-
-    // Handle Cam
-    if ((flightState == "ASCENDING" && altitude > 200 && altitude - last_alt < 0) && !(recording)) {
-      startRecording();
-      recording = true;
-      
-    } else if ((flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1)        \
-                && recording) {
-      stopRecording();
-      recording = false;
-    }
     
     // Handle HS
     // !overrides whatever hs position was set last
@@ -918,6 +902,7 @@ void loop() {
   
         flightState = "LANDED";
         mast_raised = 'M';
+        stopRecording();
       } else if (flightState == "LANDED"){
         buzEnable = true;
       } else {
