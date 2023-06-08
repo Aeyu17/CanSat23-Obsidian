@@ -72,15 +72,9 @@ const int mosfetPin = 27;
 const int buzPin = 21;
 const int cameraPin = 4;
 
-// Buzzer
+// LED & Buzzer
 bool buzEnable = false;
-
-// HS
-int hsPhase = -1;
-bool hsCommandFlag = false;
-
-// Cam
-bool recording = false;
+bool ledEnable = true;
 
 // Data Rate
 int lastTime = 0;
@@ -540,14 +534,19 @@ void readcommands(String cmd, String cmdarg){
         startHour += 24;
       } 
     }
-
+    
+  } else if (cmd == "PING"){
+    Serial.println("Ping recieved | Pong returned");
+    Serial1.println("1070,PING");
+    cmdecho = "PING";
+      
   } else if (cmd == "SIM"){
     if (cmdarg == "ENABLE\n") {
       Serial.println("SIME");
       cmdecho = "SIME";
       simEnable = true;
       flightMode = 'S';
-      
+
     } else if (cmdarg == "DISABLE\n") {
       Serial.println("SIMD");
       cmdecho = "SIMD";
@@ -576,12 +575,12 @@ void readcommands(String cmd, String cmdarg){
     if (cmdarg == "AB\n") {
       Serial.println("ACTAB");
       cmdecho = "ACTAB";
-      buzzer();
+      buzEnable = !buzEnable;
 
     } else if (cmdarg == "LED\n") {
       Serial.println("ACTLED");
       cmdecho = "ACTLED";
-      ledBlink();
+      ledEnable = !ledEnable;
 
     } else if (cmdarg == "FL0\n") {
       Serial.println("ACTFL0");
@@ -672,8 +671,8 @@ void updateData() {
 
   // SAM
   if (samWorking) {
-    latitude = round((myGNSS.getLatitude()/10000000.0)*10000)/10000;
-    longitude = round((myGNSS.getLongitude()/10000000.0)*10000)/10000;
+    latitude = round(myGNSS.getLatitude()*1000)/1000;
+    longitude = round(myGNSS.getLongitude()*1000)/1000;
     gps_altitude = myGNSS.getAltitude()/1000.0;
     siv = myGNSS.getSIV();
     gps_time = (String)myGNSS.getHour() + ":" + (String)myGNSS.getMinute() + ":" + (String)myGNSS.getSecond();
@@ -778,12 +777,14 @@ void preciseTimedFuncs(void * parameters) {
     buzFlip = false;
     ledTime = 1000;
     buzTime = 5000;
-    digitalWrite(ledPin, (ledFlip ? LOW : HIGH));
+    if (ledEnable) {
+      digitalWrite(ledPin, (ledFlip ? LOW : HIGH));
+    }
     ledFlip = !ledFlip;
     if (buzEnable) {
       digitalWrite(buzPin, (buzFlip ? LOW : HIGH));
-      buzFlip = !buzFlip;
     }
+    buzFlip = !buzFlip;
     
     // Buzzer
     while (currentTime - startTime <= buzTime) {
@@ -793,7 +794,9 @@ void preciseTimedFuncs(void * parameters) {
       
       // LED
       if (currentTime - startTime > ledTime) {
-        digitalWrite(ledPin, (ledFlip ? LOW : HIGH));
+        if (ledEnable) {
+          digitalWrite(ledPin, (ledFlip ? LOW : HIGH));
+        }
 
         ledTime += 1000;
         ledFlip = !ledFlip;
@@ -801,12 +804,14 @@ void preciseTimedFuncs(void * parameters) {
       // Serial.println(currentTime - startTime);
       currentTime = millis();
     }
-    digitalWrite(ledPin, LOW);
+    if (ledEnable) {
+      digitalWrite(ledPin, LOW);
+    }
     ledFlip = true;
     if (buzEnable) {
       digitalWrite(buzPin, (buzFlip ? LOW : HIGH));
-      buzFlip = !buzFlip;
     }
+    buzFlip = !buzFlip;
     
     buzTime += buzTime;
 
@@ -818,19 +823,24 @@ void preciseTimedFuncs(void * parameters) {
       
       // LED
       if (currentTime - startTime > ledTime) {
-        digitalWrite(ledPin, (ledFlip ? LOW : HIGH));
+        if (ledEnable) {
+          digitalWrite(ledPin, (ledFlip ? LOW : HIGH));
+        }
+        
         ledTime += 1000;
         ledFlip = !ledFlip;
       }
       // Serial.println(currentTime - startTime);
       currentTime = millis();
     }
+    if (ledEnable) {
     digitalWrite(ledPin, HIGH);
+    }
     ledFlip = false;
     if (buzEnable) {
       digitalWrite(buzPin, (buzFlip ? LOW : HIGH));
-      buzFlip = !buzFlip;
     }
+    buzFlip = !buzFlip;
     
     // Handle HS
     // !overrides whatever hs position was set last
@@ -841,7 +851,7 @@ void preciseTimedFuncs(void * parameters) {
       setShieldPosition(0);
   
     } else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1          \
-              && (panelPosition == 0 && panelPosition != 2)){
+              && altitude < 50 && (panelPosition == 0 && panelPosition != 2)){
       setShieldPosition(2);
     }
   }
@@ -897,7 +907,7 @@ void loop() {
         flightState = "PCDEPLOYED";
         pc_deployed = 'C';
   
-      } else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1){
+      } else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1 && altitude < 50){
         setFlagPosition(1);
   
         flightState = "LANDED";
