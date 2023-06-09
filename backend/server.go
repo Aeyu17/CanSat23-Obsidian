@@ -220,10 +220,10 @@ func reader(conn *websocket.Conn) {
 
 		case "PING":
 			fmt.Println("PING CALLED")
-			if !(Mode == "flight" || Mode == "sim") {
-				fmt.Println("PING ignored, turn on flight or sim mode.")
-				continue
-			}
+			// if !(Mode == "flight" || Mode == "sim") {
+			// 	fmt.Println("PING ignored, turn on flight or sim mode.")
+			// 	continue
+			// }
 
 			start := time.Now()
 
@@ -232,7 +232,10 @@ func reader(conn *websocket.Conn) {
 			pingChannel := make(chan string, 1)
 			flag := true
 			go func() {
-				pingChannel <- GetPingPacket(PacketList)
+				p := GetPingPacket(PacketList)
+				if (p != "Empty") {
+					pingChannel <- p
+				}
 			}()
 			go func() {
 				// goofy ahh
@@ -244,12 +247,10 @@ func reader(conn *websocket.Conn) {
 				case <- timeOut:
 					fmt.Println("Ping timed out. Please check connection.")
 					flag = false
-				case p := <- pingChannel:
-					if p != "Empty" {
-						duration := time.Since(start)
-						fmt.Println("Pong! " + strconv.FormatInt(duration.Milliseconds(), 5) + "ms")
-						flag = false
-					}
+				case <- pingChannel:
+					duration := time.Since(start)
+					fmt.Println("Pong! " + strconv.FormatInt(duration.Milliseconds(), 5) + "ms")
+					flag = false
 				}
 			}
 
