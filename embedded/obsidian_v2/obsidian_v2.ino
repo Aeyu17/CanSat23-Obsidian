@@ -43,7 +43,7 @@ float voltage;
 String missionTime = "00:00:00";
 int packetCount = 0;
 char flightMode = 'F';
-String flightState = "IDLE"; // READY IF TESTING ON ITS OWN, IDLE IF TESTING XBEES
+String flightState = "READY"; // READY IF TESTING ON ITS OWN, IDLE IF TESTING XBEES
 char hs_deployed = 'N';
 char pc_deployed = 'N';
 char mast_raised = 'N';
@@ -287,8 +287,8 @@ void debugPrintData(){
   Serial.println("Altitude Offset: " + (String)alt_offset);
   Serial.println();
   Serial.println("SAM DATA");
-  Serial.println("Latitude: " + (String)latitude);
-  Serial.println("Longitude: " + (String)longitude);
+  Serial.println("Latitude: " + String(latitude, 4));
+  Serial.println("Longitude: " + String(longitude, 4));
   Serial.println("GPS Altitude: " + (String)gps_altitude);
   Serial.println("SIVs: " + (String)siv);
   Serial.println("GPS Time: " + gps_time);
@@ -671,8 +671,8 @@ void updateData() {
 
   // SAM
   if (samWorking) {
-    latitude = round(myGNSS.getLatitude()*1000)/1000;
-    longitude = round(myGNSS.getLongitude()*1000)/1000;
+    latitude = myGNSS.getLatitude()/10000000.0;
+    longitude = myGNSS.getLongitude()/10000000.0;
     gps_altitude = myGNSS.getAltitude()/1000.0;
     siv = myGNSS.getSIV();
     gps_time = (String)myGNSS.getHour() + ":" + (String)myGNSS.getMinute() + ":" + (String)myGNSS.getSecond();
@@ -748,8 +748,8 @@ String packetGenerator(){
                   + (String)voltage + "," 
                   + gps_time + "," 
                   + (String)gps_altitude + "," 
-                  + (String)latitude + "," 
-                  + (String)longitude + "," 
+                  + String(latitude, 4) + "," 
+                  + String(longitude, 4) + "," 
                   + (String)siv + "," 
                   + (String)tiltx + "," 
                   + (String)tilty + "," 
