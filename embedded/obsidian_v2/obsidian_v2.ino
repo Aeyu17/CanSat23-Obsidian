@@ -72,15 +72,12 @@ const int mosfetPin = 27;
 const int buzPin = 21;
 const int cameraPin = 4;
 
-// Buzzer
+// LED & Buzzer
 bool buzEnable = false;
+bool ledEnable = true;
 
-// HS
-int hsPhase = -1;
-bool hsCommandFlag = false;
-
-// Cam
-bool recording = false;
+// Data Rate
+int lastTime = 0;
 
 File packet_csv;
 File backup_txt;
@@ -88,7 +85,7 @@ Servo releaseServo;
 Servo flagServo;
 Servo panelServo;
 
-///////////////////////////////////// SETUP /////////////////////////////////////
+////////////////////////////////////////////// SETUP /////////////////////////////////////////////////////////
 void setup() {  
   Serial.begin(9600);
   Serial1.begin(115200); // xbee communication
@@ -147,7 +144,9 @@ void setup() {
   } else {
     Serial.println("SAM WORKING");
     myGNSS.setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
-    myGNSS.saveConfigSelective(VAL_CFG_SUBSEC_IOPORT); //Save (only) the communications port settings to flash and BBR
+    //Save (only) the communications port settings to flash and BBR
+    myGNSS.saveConfigSelective(VAL_CFG_SUBSEC_IOPORT);
+    myGNSS.setMeasurementRate(250); // Set sampling rate of the GNSS
     
     startHour = myGNSS.getHour();
     startMinute = myGNSS.getMinute();
@@ -216,7 +215,9 @@ void setup() {
     if (!packet_csv){
       Serial.println("SD CSV DID NOT OPEN PROPERLY");
     } else {
-      writeToFile("TEAM_ID,MISSION_TIME,PACKET_COUNT,MODE,STATE,ALTITUDE,HS_DEPLOYED,PC_DEPLOYED,MAST_RAISED,TEMPERATURE,PRESSURE,VOLTAGE,GPS_TIME,GPS_ALTITUDE,GPS_LATITUDE,GPS_LONGITUDE,GPS_SATS,TILT_X,TILT_Y,CMD_ECHO\n", packet_csv);
+      writeToFile("TEAM_ID,MISSION_TIME,PACKET_COUNT,MODE,STATE,ALTITUDE,HS_DEPLOYED,                        \
+      PC_DEPLOYED,MAST_RAISED,TEMPERATURE,PRESSURE,VOLTAGE,GPS_TIME,GPS_ALTITUDE,                            \
+      GPS_LATITUDE,GPS_LONGITUDE,GPS_SATS,TILT_X,TILT_Y,CMD_ECHO\n", packet_csv);
     }
     packet_csv.close();
   }
@@ -231,6 +232,7 @@ void setup() {
 
   // Camera set up
   pinMode(cameraPin, OUTPUT);
+  startRecording();
 
   // LED set up
   pinMode(ledPin,OUTPUT);
@@ -239,7 +241,7 @@ void setup() {
   pinMode(buzPin, OUTPUT);
 }
 
-///////////////////////////////////// HELPER FUNCTIONS /////////////////////////////////////
+//////////////////////////////////////////// HELPER FUNCTIONS ////////////////////////////////////////////////
 String itemAt(String packet, int pos){
   // pos is 0 indexed
   int lastpos = -1;
@@ -301,7 +303,8 @@ void debugPrintData(){
   Serial.println("-------------------------");
 }
 
-bool checkHSCondition() {
+// Used for Core 0 processes
+bool checkBreakCondition() {
   if (flightState == "DESCENDING" && altitude <= 500){
     return true;
 
@@ -310,13 +313,16 @@ bool checkHSCondition() {
 
   } else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1){
     return true;
+
+  } else if (flightState == "ASCENDING" && altitude > 200 && altitude - last_alt < 0){
+    return true; 
     
   } else {
     return false;
   }
 }
 
-///////////////////////////////////// MECHANISMS /////////////////////////////////////
+/////////////////////////////////////////////// MECHANISMS ///////////////////////////////////////////////////
 void setFlagPosition(int pos) {
   // 0 lowers the flag, 1 raises the flag
   digitalWrite(mosfetPin, HIGH);
@@ -363,7 +369,8 @@ void setShieldPosition(int pos) {
 
   digitalWrite(mosfetPin, HIGH);
   delay(250);
-
+  
+  // Shield Override for ACTRES command
   if (pos > panelPosition) { // heat shield needs to open
     panelServo.write(130);
 
@@ -386,10 +393,10 @@ void setShieldPosition(int pos) {
     panelServo.write(50);
 
     if (panelPosition == 2 && pos == 1) {
-      delay(12000);
+      delay(10000);
 
     } else if (panelPosition == 2 && pos == 0) {
-      delay(12000);
+      delay(11000);
 
     } else if (panelPosition == 1 && pos == 0) {
       delay(4000);
@@ -445,7 +452,8 @@ void buzzer(){
   digitalWrite(buzPin,LOW);
 }
 
-///////////////////////////////////// COMMAND READING /////////////////////////////////////
+
+/////////////////////////////////////////////// COMMAND READING //////////////////////////////////////////////
 void readcommands(String cmd, String cmdarg){
   if (cmd == "CX"){
     if (cmdarg == "ON\n"){
@@ -526,14 +534,19 @@ void readcommands(String cmd, String cmdarg){
         startHour += 24;
       } 
     }
-
+    
+  } else if (cmd == "PING"){
+    Serial.println("Ping recieved | Pong returned");
+    Serial1.println("1070,PING");
+    cmdecho = "PING";
+      
   } else if (cmd == "SIM"){
     if (cmdarg == "ENABLE\n") {
       Serial.println("SIME");
       cmdecho = "SIME";
       simEnable = true;
       flightMode = 'S';
-      
+
     } else if (cmdarg == "DISABLE\n") {
       Serial.println("SIMD");
       cmdecho = "SIMD";
@@ -562,12 +575,12 @@ void readcommands(String cmd, String cmdarg){
     if (cmdarg == "AB\n") {
       Serial.println("ACTAB");
       cmdecho = "ACTAB";
-      buzzer();
+      buzEnable = !buzEnable;
 
     } else if (cmdarg == "LED\n") {
       Serial.println("ACTLED");
       cmdecho = "ACTLED";
-      ledBlink();
+      ledEnable = !ledEnable;
 
     } else if (cmdarg == "FL0\n") {
       Serial.println("ACTFL0");
@@ -625,7 +638,8 @@ void readcommands(String cmd, String cmdarg){
   } 
 }
 
-///////////////////////////////////// READING DATA /////////////////////////////////////
+
+////////////////////////////////////////// READING DATA //////////////////////////////////////////////////////
 void updateData() {
   /* 
    *  Updates the internal variables with the newly read data
@@ -641,7 +655,8 @@ void updateData() {
       altitude = round(10 * (bmp.readAltitude(SEALEVELPRESSURE_HPA) - alt_offset))/10.0;
     } else if (pressure != 0) {
       // this formula will kill me
-      altitude = (temperature + 273.15)/(-0.0065) * (pow(((pressure*1000)/(SEALEVELPRESSURE_HPA*100)), ((-8.31432*-0.0065)/(9.80665*0.0289644))) - 1) - alt_offset;
+      altitude = (temperature + 273.15)/(-0.0065) * (pow(((pressure*1000)/(SEALEVELPRESSURE_HPA*100)),       \
+                 ((-8.31432*-0.0065)/(9.80665*0.0289644))) - 1) - alt_offset;
       Serial.println("SIMP altitude: " + String(altitude));
       if (!offset_set) {
         alt_offset = altitude;
@@ -656,8 +671,8 @@ void updateData() {
 
   // SAM
   if (samWorking) {
-    latitude = round((myGNSS.getLatitude()/10000000.0)*10000)/10000;
-    longitude = round((myGNSS.getLongitude()/10000000.0)*10000)/10000;
+    latitude = round(myGNSS.getLatitude()*1000)/1000;
+    longitude = round(myGNSS.getLongitude()*1000)/1000;
     gps_altitude = myGNSS.getAltitude()/1000.0;
     siv = myGNSS.getSIV();
     gps_time = (String)myGNSS.getHour() + ":" + (String)myGNSS.getMinute() + ":" + (String)myGNSS.getSecond();
@@ -709,7 +724,6 @@ void updateData() {
   }
   
   missionTime = hourStr + ":" + minStr + ":" + secStr;
-  
 }
 
 String packetGenerator(){
@@ -744,7 +758,8 @@ String packetGenerator(){
     return packet;         
 }
 
-// Core 0 // (Buzzer, LED, Servo)
+
+///////////////////////////////////////////// Core 0 Processes ///////////////////////////////////////////////
 void preciseTimedFuncs(void * parameters) {
   delay(500);
   int startTime = millis();
@@ -762,22 +777,26 @@ void preciseTimedFuncs(void * parameters) {
     buzFlip = false;
     ledTime = 1000;
     buzTime = 5000;
-    digitalWrite(ledPin, (ledFlip ? LOW : HIGH));
+    if (ledEnable) {
+      digitalWrite(ledPin, (ledFlip ? LOW : HIGH));
+    }
     ledFlip = !ledFlip;
     if (buzEnable) {
       digitalWrite(buzPin, (buzFlip ? LOW : HIGH));
-      buzFlip = !buzFlip;
     }
+    buzFlip = !buzFlip;
     
     // Buzzer
     while (currentTime - startTime <= buzTime) {
-      if (checkHSCondition()) {
+      if (checkBreakCondition()) {
         break;
       }
       
       // LED
       if (currentTime - startTime > ledTime) {
-        digitalWrite(ledPin, (ledFlip ? LOW : HIGH));
+        if (ledEnable) {
+          digitalWrite(ledPin, (ledFlip ? LOW : HIGH));
+        }
 
         ledTime += 1000;
         ledFlip = !ledFlip;
@@ -785,162 +804,161 @@ void preciseTimedFuncs(void * parameters) {
       // Serial.println(currentTime - startTime);
       currentTime = millis();
     }
-    digitalWrite(ledPin, LOW);
+    if (ledEnable) {
+      digitalWrite(ledPin, LOW);
+    }
     ledFlip = true;
     if (buzEnable) {
       digitalWrite(buzPin, (buzFlip ? LOW : HIGH));
-      buzFlip = !buzFlip;
     }
+    buzFlip = !buzFlip;
     
     buzTime += buzTime;
 
     // Buzzer
     while (currentTime - startTime <= buzTime) {
-      if (checkHSCondition()) {
+      if (checkBreakCondition()) {
         break;
       }
       
       // LED
       if (currentTime - startTime > ledTime) {
-        digitalWrite(ledPin, (ledFlip ? LOW : HIGH));
+        if (ledEnable) {
+          digitalWrite(ledPin, (ledFlip ? LOW : HIGH));
+        }
+        
         ledTime += 1000;
         ledFlip = !ledFlip;
       }
       // Serial.println(currentTime - startTime);
       currentTime = millis();
     }
+    if (ledEnable) {
     digitalWrite(ledPin, HIGH);
+    }
     ledFlip = false;
     if (buzEnable) {
       digitalWrite(buzPin, (buzFlip ? LOW : HIGH));
-      buzFlip = !buzFlip;
     }
-
-    // Handle Cam
-    if ((flightState == "ASCENDING" && altitude > 200 && altitude - last_alt < 0) && !(recording)) {
-      startRecording();
-      recording = true;
-      
-    } else if ((flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1) && recording) {
-      stopRecording();
-      recording = false;
-    }
-    
+    buzFlip = !buzFlip;
     
     // Handle HS
-    if (flightState == "DESCENDING" && altitude <= 500 && (panelPosition != 1)){  // overrides whatever hs position was set last
+    // !overrides whatever hs position was set last
+    if (flightState == "DESCENDING" && altitude <= 500 && (panelPosition != 1)){
       setShieldPosition(1);
 
     } else if (flightState == "HSDEPLOYED" && altitude <= 200 && (panelPosition == 1 && panelPosition != 0)){
       setShieldPosition(0);
   
-    } else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1 && (panelPosition == 0 && panelPosition != 2)){
+    } else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1          \
+              && altitude < 50 && (panelPosition == 0 && panelPosition != 2)){
       setShieldPosition(2);
     }
   }
 }
 
-///////////////////////////////////// FLIGHT STATE LOOP /////////////////////////////////////
+//////////////////////////////////////////// FLIGHT STATE LOOP ///////////////////////////////////////////////
 void loop() {
-  
-  if (sdWorking){
-    packet_csv = SD.open("/testlaunchdata.csv", FILE_APPEND);
-    backup_txt = SD.open("/reset.txt", FILE_WRITE);
+  if (millis() - lastTime > 1000){
 
-    String resetPacket = String(alt_offset) + "," + 
-                         String(packetCount) + "," + 
-                         String(flightMode) + "," + 
-                         String(flightState) + "," + 
-                         String(hs_deployed) + "," + 
-                         String(pc_deployed) + "," + 
-                         String(mast_raised) + "," + 
-                         String(simEnable) + "," +
-                         String(simActive) + "," +
-                         String(cmdecho) + "," + 
-                         String(panelPosition) + '\n';
-                         
-    writeToFile(resetPacket, backup_txt); 
-    backup_txt.close();
-  }
-  
-  if (flightState != "IDLE") {
-    String packet = packetGenerator();
-
+    lastTime = millis();
     if (sdWorking){
-      writeToFile(packet, packet_csv);
-    }
-    Serial1.print(packet);
-    debugPrintData();
-    
-    if (flightState == "READY" && altitude >= 50){
-      flightState = "ASCENDING";
-
-    } else if (flightState == "ASCENDING" && altitude > 200 && altitude - last_alt < 0){
-      flightState = "DESCENDING";
-
-    } else if (flightState == "DESCENDING" && altitude <= 500){
-      setReleasePosition(1);
-      flightState = "HSDEPLOYED";
-      hs_deployed = 'P';
-
-    } else if (flightState == "HSDEPLOYED" && altitude <= 200){
-      setReleasePosition(2);
-      flightState = "PCDEPLOYED";
-      pc_deployed = 'C';
-
-    } else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1){
-      setFlagPosition(1);
-
-      flightState = "LANDED";
-      mast_raised = 'M';
-    } else if (flightState == "LANDED"){
-      buzEnable = true;
-    } else {
-      Serial.println("No action required for the cases.");
-    }
-  }
+      packet_csv = SD.open("/testlaunchdata.csv", FILE_APPEND);
+      backup_txt = SD.open("/reset.txt", FILE_WRITE);
   
-  if (sdWorking){
-    packet_csv.close();
-  }
+      String resetPacket = String(alt_offset) + "," + 
+                           String(packetCount) + "," + 
+                           String(flightMode) + "," + 
+                           String(flightState) + "," + 
+                           String(hs_deployed) + "," + 
+                           String(pc_deployed) + "," + 
+                           String(mast_raised) + "," + 
+                           String(simEnable) + "," +
+                           String(simActive) + "," +
+                           String(cmdecho) + "," + 
+                           String(panelPosition) + '\n';
+                           
+      writeToFile(resetPacket, backup_txt); 
+      backup_txt.close();
+    }
+    
+    if (flightState != "IDLE") {
+      String packet = packetGenerator();
 
-  if (!(simActive and simEnable) and Serial1.available()) {
+      if (sdWorking){
+        writeToFile(packet, packet_csv);
+      }
+      Serial1.print(packet);
+      debugPrintData();
+      
+      if (flightState == "READY" && altitude >= 50){
+        flightState = "ASCENDING";
+  
+      } else if (flightState == "ASCENDING" && altitude > 200 && altitude - last_alt < 0){
+        flightState = "DESCENDING";
+  
+      } else if (flightState == "DESCENDING" && altitude <= 500){
+        setReleasePosition(1);
+        flightState = "HSDEPLOYED";
+        hs_deployed = 'P';
+  
+      } else if (flightState == "HSDEPLOYED" && altitude <= 200){
+        setReleasePosition(2);
+        flightState = "PCDEPLOYED";
+        pc_deployed = 'C';
+  
+      } else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1 && altitude < 50){
+        setFlagPosition(1);
+  
+        flightState = "LANDED";
+        mast_raised = 'M';
+        stopRecording();
+      } else if (flightState == "LANDED"){
+        buzEnable = true;
+      } else {
+        Serial.println("No action required for the cases.");
+      }
+    }
+    
+    if (sdWorking){
+      packet_csv.close();
+    }
+  
+    if (!(simActive and simEnable) and Serial1.available()) {
       String packet = Serial1.readStringUntil('\n');
       packet = packet + "\n";
       Serial.print(packet);
-  
-    if (itemAt(packet, 0) == "CMD" and itemAt(packet, 1) == "1070") {
-      readcommands(itemAt(packet, 2), itemAt(packet, 3)); 
-      // maybe check if item 3 is CMD?? that would happen if there is no arg like in CAL
-    }
-  } 
-  else if (simActive and simEnable){
-    while (true){
-      while (!Serial1.available()){;}
-//        String packet = Serial1.readString();
-//        Serial.print(packet);
     
+      if (itemAt(packet, 0) == "CMD" and itemAt(packet, 1) == "1070") {
+        readcommands(itemAt(packet, 2), itemAt(packet, 3)); 
+        // maybe check if item 3 is CMD?? that would happen if there is no arg like in CAL
+      }
+    }
+    else if (simActive and simEnable){
+      while (true){
+        while (!Serial1.available()){;}
         String packet = Serial1.readStringUntil('\n');
         packet = packet + "\n";
         Serial.print(packet);
-    
-      if (itemAt(packet,0) == "CMD" && itemAt(packet, 1) == "1070"){
-        cmd = itemAt(packet, 2);
-        cmdarg = itemAt(packet, 3);
-      
-        if (cmd == "SIMP"){
-          pressure = cmdarg.toFloat()/1000; // convert string to float
-          cmdecho = "SIMP";
-          Serial.println("SIMP");
-          break;
-        }
-        else {
-          readcommands(cmd, cmdarg);
+        
+        if (itemAt(packet,0) == "CMD" && itemAt(packet, 1) == "1070"){
+          cmd = itemAt(packet, 2);
+          cmdarg = itemAt(packet, 3);
+        
+          if (cmd == "SIMP"){
+            pressure = cmdarg.toFloat()/1000; // convert string to float
+            cmdecho = "SIMP";
+            Serial.println("SIMP");
+            break;
+          }
+          else {
+            readcommands(cmd, cmdarg);
+          }
         }
       }
     }
   }
-
-  ledBlink(); // make sure this stays at the end of the loop
+  readcommands(cmd, cmdarg);
+  
   // for john <3
 }
