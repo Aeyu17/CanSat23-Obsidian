@@ -43,7 +43,7 @@ float voltage;
 String missionTime = "00:00:00";
 int packetCount = 0;
 char flightMode = 'F';
-String flightState = "READY"; // READY IF TESTING ON ITS OWN, IDLE IF TESTING XBEES
+String flightState = "IDLE"; // READY IF TESTING ON ITS OWN, IDLE IF TESTING XBEES
 char hs_deployed = 'N';
 char pc_deployed = 'N';
 char mast_raised = 'N';
@@ -75,6 +75,9 @@ const int cameraPin = 4;
 // LED & Buzzer
 bool buzEnable = false;
 bool ledEnable = true;
+
+// Cam
+bool recording = false;
 
 // Data Rate
 int lastTime = 0;
@@ -232,7 +235,9 @@ void setup() {
 
   // Camera set up
   pinMode(cameraPin, OUTPUT);
+  digitalWrite(cameraPin, HIGH);
   startRecording();
+  recording = true;
 
   // LED set up
   pinMode(ledPin,OUTPUT);
@@ -414,26 +419,26 @@ void setShieldPosition(int pos) {
   digitalWrite(mosfetPin, LOW);
 }
 
-void startRecording() {
+inline void startRecording() {
   Serial.println("Recording...");
   digitalWrite(cameraPin, LOW); 
-  delay(1000);
+  delay(1500);
   digitalWrite(cameraPin, HIGH);
   Serial.println("Recording started.");
-  
-  delay(1000);
-  
-  Serial.println("Recording...");
-  digitalWrite(cameraPin, LOW); 
-  delay(1000);
-  digitalWrite(cameraPin, HIGH);
-  Serial.println("Recording started.");
+
+//  delay(1000);
+//
+//  Serial.println("Recording...");
+//  digitalWrite(cameraPin, LOW); 
+//  delay(1000);
+//  digitalWrite(cameraPin, HIGH);
+//  Serial.println("Recording started.");
 }
 
-void stopRecording() {
+inline void stopRecording() {
   Serial.println("Stopping the recording...");
   digitalWrite(cameraPin, LOW);
-  delay(1000);
+  delay(1500);
   digitalWrite(cameraPin, HIGH);
   delay(10);
   digitalWrite(cameraPin, LOW);
@@ -628,6 +633,8 @@ void readcommands(String cmd, String cmdarg){
       setFlagPosition(0);
       setReleasePosition(0);
       setShieldPosition(0);
+      buzEnable = false;
+      ledEnable = true;
       hs_deployed = 'N';
       pc_deployed = 'N';
       mast_raised = 'N';
@@ -841,6 +848,12 @@ void preciseTimedFuncs(void * parameters) {
       digitalWrite(buzPin, (buzFlip ? LOW : HIGH));
     }
     buzFlip = !buzFlip;
+
+    if ((flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1         \
+    && altitude < 50) && recording) {
+      stopRecording();
+      recording = false;
+    }
     
     // Handle HS
     // !overrides whatever hs position was set last
@@ -912,7 +925,6 @@ void loop() {
   
         flightState = "LANDED";
         mast_raised = 'M';
-        stopRecording();
       } else if (flightState == "LANDED"){
         buzEnable = true;
       } else {
