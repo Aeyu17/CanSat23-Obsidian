@@ -9,7 +9,7 @@ import (
 	"github.com/tarm/serial"
 	"go.bug.st/serial/enumerator"
 )
- 
+
 const BAUD = 115200
 var (
 	Port string;
