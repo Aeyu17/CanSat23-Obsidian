@@ -420,6 +420,9 @@ void setShieldPosition(int pos) {
 }
 
 inline void startRecording() {
+//  digitalWrite(cameraPin, LOW);
+//  delay(1250);
+//  digitalWrite(cameraPin, HIGH);
   Serial.println("Recording...");
   digitalWrite(cameraPin, LOW); 
   delay(1500);
@@ -436,6 +439,9 @@ inline void startRecording() {
 }
 
 inline void stopRecording() {
+//  digitalWrite(cameraPin, LOW);
+//  delay(1250);
+//  digitalWrite(cameraPin, HIGH);
   Serial.println("Stopping the recording...");
   digitalWrite(cameraPin, LOW);
   delay(1500);
@@ -848,12 +854,6 @@ void preciseTimedFuncs(void * parameters) {
       digitalWrite(buzPin, (buzFlip ? LOW : HIGH));
     }
     buzFlip = !buzFlip;
-
-    if ((flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1         \
-    && altitude < 50) && recording) {
-      stopRecording();
-      recording = false;
-    }
     
     // Handle HS
     // !overrides whatever hs position was set last
@@ -865,7 +865,15 @@ void preciseTimedFuncs(void * parameters) {
   
     } else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1          \
               && altitude < 50 && (panelPosition == 0 && panelPosition != 2)){
-      setShieldPosition(2);
+      digitalWrite(mosfetPin, HIGH);
+      delay(250);
+      panelServo.write(130);
+      delay(35000);
+      panelPosition = 2;
+      panelServo.write(93);
+      digitalWrite(mosfetPin, LOW);
+      stopRecording();
+      recording = false;
     }
   }
 }
@@ -926,7 +934,7 @@ void loop() {
         flightState = "LANDED";
         mast_raised = 'M';
       } else if (flightState == "LANDED"){
-        buzEnable = true;
+        //buzEnable = true;
       } else {
         Serial.println("No action required for the cases.");
       }
@@ -971,6 +979,5 @@ void loop() {
     }
   }
   readcommands(cmd, cmdarg);
-  
   // for john <3
 }
