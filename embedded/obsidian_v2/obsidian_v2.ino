@@ -861,6 +861,7 @@ void preciseTimedFuncs(void * parameters) {
       setShieldPosition(1);
 
     } else if (flightState == "HSDEPLOYED" && altitude <= 200 && (panelPosition == 1 && panelPosition != 0)){
+      delay(1000);
       setShieldPosition(0);
   
     } else if (flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1          \
@@ -934,7 +935,7 @@ void loop() {
         flightState = "LANDED";
         mast_raised = 'M';
       } else if (flightState == "LANDED"){
-        //buzEnable = true;
+        buzEnable = true;
       } else {
         Serial.println("No action required for the cases.");
       }
