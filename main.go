@@ -11,6 +11,7 @@ import (
 )
 
 var mu sync.Mutex;
+var thisIsSoStupid bool = false
 
 // can be flight, sim, and gen
 /*
@@ -40,7 +41,11 @@ func packetTransceiver(l *list.List) {
 			}
 			//simpPacket := backend.ReadPressureCSV("cansat_2023_simp.csv")
 			simpPacket := backend.ReadPressureTXT("cansat_2023_simp.txt")
-			while !(len(e) == 0 || len(e) == 2) {
+			if !(thisIsSoStupid) {
+				simpPacket := backend.ReadPressureTXT("cansat_2023_simp.txt")
+				thisIsSoStupid = true
+			}
+			while !(len(e) == 2) {
 				simpPacket := backend.ReadPressureTXT("cansat_2023_simp.txt")
 			}
 			if len(simpPacket) == 0 {
