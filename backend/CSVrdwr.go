@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"io"
+	"strings"
 )
 
 var lineIndex int = 0
@@ -32,68 +33,6 @@ func WriteToCSV(message string, csv string) {
 		return
 	}
 }
-
-// func ConvertTxtToCSV(txtFile string, csvFile string) {
-// 	csv, err := os.OpenFile(csvFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
-// 	defer func () {
-// 		csvFile.Close()
-// 	}()
-
-// 	if err != nil {
-// 		log.Println(err)
-// 		return
-// 	}
-// 	csvFile.close()
-
-// 	txt, err := os.OpenFile(txtFile, os.O_RDONLY, 0644)
-// 	defer func () {
-// 		txtFile.Close()
-// 	}()
-
-// 	if err != nil {
-// 		log.Println(err)
-// 		return
-// 	}
-
-// 	r := txt.NewReader(txtFile)
-// 	// e := csv.NewReader(csvFile)
-
-// 	var txtLine []string
-// 	lineIgnore := false 
-
-// 	for i := 0; i < lineIndex + 1; i++ {
-// 		txtLine, err = r.Read()
-
-// 		if err == io.EOF {
-// 			lineIndex = -1
-// 			break
-// 		}
-// 		if err != nil {
-// 			log.Println(err)
-// 			return
-// 		}
-
-// 	}
-// 	lineIndex++
-
-// 	csv, err := os.OpenFile(csvFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-// 	defer func () {
-// 		csvFile.Close()
-// 	}()
-
-// 	if err != nil {
-// 		log.Println(err)
-// 		return
-// 	}
-
-// 	for index, str := range cmdArr {
-// 		pcmd += str
-// 		if index != len(cmdArr) - 1 {
-// 			pcmd += ","
-// 		}
-// 	}
-// 	return 
-// }
 
 func ReadPressureCSV(pcsv string) (pcmd string){
 	csvfile, err := os.OpenFile(pcsv, os.O_RDONLY, 0644)
@@ -134,3 +73,50 @@ func ReadPressureCSV(pcsv string) (pcmd string){
 	return 
 }
 
+func ReadPressureTXT(ptxt string) (pcmd string){
+	txtfile, err := os.OpenFile(ptxt, os.O_RDONLY, 0644)
+	defer func () {
+		txtfile.Close()
+	}()
+
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	r := bufio.NewReaderSize(txtfile, 1024)
+
+	var readLine string
+
+	for i := 0; i < lineIndex; i++ {
+		readLine, err = r.ReadString('\n')
+	}
+
+	cmd := strings.Split(readLine, ",")
+	for (readLine[0] == "#") {
+		readLine, err = r.ReadString('\n')
+		cmd = strings.Split(readLine, ",")
+	}
+	
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	for i := 0; i < len(cmd); i++ {
+		if (strings.Contains(cmd[i], "$")) {
+			cmd[i] = "1070"
+		}
+	}
+
+	lineIndex++
+
+	for index, str := range cmd {
+		pcmd += str
+		if index != len(cmd) - 1 {
+			pcmd += ","
+		}
+	}
+	txtfile.Close()
+	return 
+}

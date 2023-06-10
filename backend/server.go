@@ -202,19 +202,19 @@ func reader(conn *websocket.Conn) {
 
 		case "ACTAB":
 			fmt.Println("ACTAB CALLED")
-			if !(Mode == "flight" || Mode == "sim") {
-				fmt.Println("ACTAB ignored, turn on flight or sim mode.")
-				continue
-			}
+			// if !(Mode == "flight" || Mode == "sim") {
+			// 	fmt.Println("ACTAB ignored, turn on flight or sim mode.")
+			// 	continue
+			// }
 
 			SendPacket("CMD,1070,ACT,AB\n")
 
 		case "ACTLED":
 			fmt.Println("ACTLED CALLED")
-			if !(Mode == "flight" || Mode == "sim") {
-				fmt.Println("ACTLED ignored, turn on flight or sim mode.")
-				continue
-			}
+			// if !(Mode == "flight" || Mode == "sim") {
+			// 	fmt.Println("ACTLED ignored, turn on flight or sim mode.")
+			// 	continue
+			// }
 
 			SendPacket("CMD,1070,ACT,LED\n")
 
