@@ -76,6 +76,9 @@ const int cameraPin = 4;
 bool buzEnable = false;
 bool ledEnable = true;
 
+// Cam
+bool recording = false;
+
 // Data Rate
 int lastTime = 0;
 
@@ -232,7 +235,9 @@ void setup() {
 
   // Camera set up
   pinMode(cameraPin, OUTPUT);
+  digitalWrite(cameraPin, HIGH);
   startRecording();
+  recording = true;
 
   // LED set up
   pinMode(ledPin,OUTPUT);
@@ -287,8 +292,8 @@ void debugPrintData(){
   Serial.println("Altitude Offset: " + (String)alt_offset);
   Serial.println();
   Serial.println("SAM DATA");
-  Serial.println("Latitude: " + (String)latitude);
-  Serial.println("Longitude: " + (String)longitude);
+  Serial.println("Latitude: " + String(latitude, 4));
+  Serial.println("Longitude: " + String(longitude, 4));
   Serial.println("GPS Altitude: " + (String)gps_altitude);
   Serial.println("SIVs: " + (String)siv);
   Serial.println("GPS Time: " + gps_time);
@@ -414,26 +419,26 @@ void setShieldPosition(int pos) {
   digitalWrite(mosfetPin, LOW);
 }
 
-void startRecording() {
+inline void startRecording() {
   Serial.println("Recording...");
   digitalWrite(cameraPin, LOW); 
-  delay(1000);
+  delay(1500);
   digitalWrite(cameraPin, HIGH);
   Serial.println("Recording started.");
-  
-  delay(1000);
-  
-  Serial.println("Recording...");
-  digitalWrite(cameraPin, LOW); 
-  delay(1000);
-  digitalWrite(cameraPin, HIGH);
-  Serial.println("Recording started.");
+
+//  delay(1000);
+//
+//  Serial.println("Recording...");
+//  digitalWrite(cameraPin, LOW); 
+//  delay(1000);
+//  digitalWrite(cameraPin, HIGH);
+//  Serial.println("Recording started.");
 }
 
-void stopRecording() {
+inline void stopRecording() {
   Serial.println("Stopping the recording...");
   digitalWrite(cameraPin, LOW);
-  delay(1000);
+  delay(1500);
   digitalWrite(cameraPin, HIGH);
   delay(10);
   digitalWrite(cameraPin, LOW);
@@ -628,6 +633,8 @@ void readcommands(String cmd, String cmdarg){
       setFlagPosition(0);
       setReleasePosition(0);
       setShieldPosition(0);
+      buzEnable = false;
+      ledEnable = true;
       hs_deployed = 'N';
       pc_deployed = 'N';
       mast_raised = 'N';
@@ -671,8 +678,8 @@ void updateData() {
 
   // SAM
   if (samWorking) {
-    latitude = round(myGNSS.getLatitude()*1000)/1000;
-    longitude = round(myGNSS.getLongitude()*1000)/1000;
+    latitude = myGNSS.getLatitude()/10000000.0;
+    longitude = myGNSS.getLongitude()/10000000.0;
     gps_altitude = myGNSS.getAltitude()/1000.0;
     siv = myGNSS.getSIV();
     gps_time = (String)myGNSS.getHour() + ":" + (String)myGNSS.getMinute() + ":" + (String)myGNSS.getSecond();
@@ -748,8 +755,8 @@ String packetGenerator(){
                   + (String)voltage + "," 
                   + gps_time + "," 
                   + (String)gps_altitude + "," 
-                  + (String)latitude + "," 
-                  + (String)longitude + "," 
+                  + String(latitude, 4) + "," 
+                  + String(longitude, 4) + "," 
                   + (String)siv + "," 
                   + (String)tiltx + "," 
                   + (String)tilty + "," 
@@ -841,6 +848,12 @@ void preciseTimedFuncs(void * parameters) {
       digitalWrite(buzPin, (buzFlip ? LOW : HIGH));
     }
     buzFlip = !buzFlip;
+
+    if ((flightState == "PCDEPLOYED" && altitude - last_alt <= 1 && altitude - last_alt >= -1         \
+    && altitude < 50) && recording) {
+      stopRecording();
+      recording = false;
+    }
     
     // Handle HS
     // !overrides whatever hs position was set last
@@ -912,7 +925,6 @@ void loop() {
   
         flightState = "LANDED";
         mast_raised = 'M';
-        stopRecording();
       } else if (flightState == "LANDED"){
         buzEnable = true;
       } else {

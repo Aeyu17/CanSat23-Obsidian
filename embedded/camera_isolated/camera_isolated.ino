@@ -3,7 +3,7 @@ const int trig = 4;
 void setup() {     
   Serial.begin(115200); 
 
-  pinMode(trig, OUTPUT);         
+  pinMode(trig, OUTPUT);      
 }
 
 void startRecording() {

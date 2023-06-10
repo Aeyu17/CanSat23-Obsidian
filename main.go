@@ -38,8 +38,11 @@ func packetTransceiver(l *list.List) {
 			if !backend.SimActive {
 				continue
 			}
-			simpPacket := backend.ReadPressureCSV("cansat_2023_simp.csv")
-			// simpPacket := backend.ReadPressureTXT("cansat_2023_simp.txt")
+			//simpPacket := backend.ReadPressureCSV("cansat_2023_simp.csv")
+			simpPacket := backend.ReadPressureTXT("cansat_2023_simp.txt")
+			while !(len(e) == 0 || len(e) == 2) {
+				simpPacket := backend.ReadPressureTXT("cansat_2023_simp.txt")
+			}
 			if len(simpPacket) == 0 {
 				fmt.Println("Simulation complete.")
 				backend.Mode = "none"
