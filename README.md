@@ -1,16 +1,17 @@
 ## CanSat 2023 - Obsidian
 
-This is the GitHub repository for Team Obsidian's CanSat 2023 code, held in Blacksburg, VA.
+This is the GitHub repository for Team 1070 (Obsidian) CanSat 2023 code, held in Blacksburg, VA.
 
 -------------------------------
 
-This was made primarily by:
+This was made by:
 
-Jamie Roberson - Team Lead
+Jamie Roberson - Software Team Lead
 
-Emily Jolly - Embedded Software
+Emily Jolly - Embedded Software Developer
 
-John Raburn - Ground Station
+John Raburn - Ground Station Developer
 
 -------------------------------
 
+Team Obsidian placed 1st within the US and 4th overall.
