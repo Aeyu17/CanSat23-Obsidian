@@ -14,4 +14,4 @@ John Raburn - Ground Station Developer
 
 -------------------------------
 
-Team Obsidian placed 1st within the US and 4th overall.
+Team Obsidian placed 2nd within the US and 5th overall.
